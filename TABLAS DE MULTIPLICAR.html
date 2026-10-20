@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablas de Multiplicar con Ábaco</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  color: #333;
+}
+
+h1 {
+  color: white;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  font-size: 2em;
+}
+
+.container {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  max-width: 800px;
+  width: 100%;
+  min-height: 500px;
+}
+
+.screen { display: none; flex-direction: column; align-items: center; gap: 20px; }
+.screen.active { display: flex; }
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.menu h2 {
+  color: #764ba2;
+  font-size: 1.8em;
+  margin-bottom: 10px;
+}
+
+.back-btn {
+  align-self: flex-start;
+  background: #666;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.3s;
+}
+
+.back-btn:hover { background: #555; }
+
+.table-title {
+  font-size: 2em;
+  font-weight: bold;
+  color: #764ba2;
+}
+
+/* Barra de usuario */
+.user-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 15px;
+  color: white;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5em;
+  font-weight: bold;
+  border: 2px solid rgba(255,255,255,0.5);
+}
+
+.user-info { flex: 1; min-width: 140px; }
+.user-name { font-size: 1.2em; font-weight: bold; }
+.user-level { font-size: 0.9em; opacity: 0.95; }
+
+.user-bar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.mini-btn {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.5);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s;
+}
+
+.mini-btn:hover { background: rgba(255,255,255,0.4); }
+
+/* Pantalla de usuarios */
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.user-item:hover {
+  border-color: #764ba2;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(118,75,162,0.2);
+}
+
+.user-item .avatar { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+
+.user-item-info { flex: 1; }
+.user-item-name { font-weight: bold; font-size: 1.1em; color: #333; }
+.user-item-meta { font-size: 0.85em; color: #777; }
+
+.delete-user {
+  background: #ff6b6b;
+  border: none;
+  color: white;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.3s;
+}
+
+.delete-user:hover { background: #c0392b; }
+
+.create-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.create-user-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.create-user-form input {
+  flex: 1;
+  padding: 14px 16px;
+  font-size: 1.1em;
+  border: 3px solid #ddd;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.3s;
+  min-width: 0;
+}
+
+.create-user-form input:focus { border-color: #764ba2; }
+
+.age-label {
+  align-self: flex-start;
+  font-weight: bold;
+  color: #764ba2;
+  font-size: 0.95em;
+}
+
+.create-btn {
+  background: linear-gradient(135deg, #2ed573, #20bf6b);
+  color: white;
+  border: none;
+  padding: 14px 22px;
+  font-size: 1.1em;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.create-btn:hover { transform: translateY(-2px); }
+
+/* Tablas */
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  width: 100%;
+}
+
+.table-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.table-btn {
+  width: 100%;
+  padding: 20px;
+  font-size: 2em;
+  font-weight: bold;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.table-cell:nth-child(1) .table-btn { background: #ff6b6b; }
+.table-cell:nth-child(2) .table-btn { background: #ffa502; }
+.table-cell:nth-child(3) .table-btn { background: #2ed573; }
+.table-cell:nth-child(4) .table-btn { background: #1e90ff; }
+.table-cell:nth-child(5) .table-btn { background: #a55eea; }
+.table-cell:nth-child(6) .table-btn { background: #ff6348; }
+.table-cell:nth-child(7) .table-btn { background: #00d2d3; }
+.table-cell:nth-child(8) .table-btn { background: #ee5a24; }
+.table-cell:nth-child(9) .table-btn { background: #6c5ce7; }
+.table-cell:nth-child(10) .table-btn { background: #20bf6b; }
+
+.table-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.review-btn {
+  width: 100%;
+  padding: 8px 5px;
+  font-size: 0.85em;
+  font-weight: bold;
+  border: 2px solid #764ba2;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  color: #764ba2;
+}
+
+.review-btn:hover {
+  background: #764ba2;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.mixed-btn {
+  grid-column: span 5;
+  background: linear-gradient(135deg, #ff6b6b, #ffa502, #2ed573, #1e90ff, #a55eea);
+  background-size: 400% 400%;
+  animation: gradientShift 5s ease infinite;
+  font-size: 1.5em;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Selector de tiempo */
+.time-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 2px solid #e9ecef;
+}
+
+.time-selector h3 {
+  color: #764ba2;
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+.time-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.time-btn {
+  padding: 12px 20px;
+  font-size: 1.3em;
+  font-weight: bold;
+  border: 3px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  color: #555;
+}
+
+.time-btn:hover {
+  border-color: #764ba2;
+  transform: translateY(-2px);
+}
+
+.time-btn.selected {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-color: #764ba2;
+  box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+}
+
+/* Ábaco */
+.abaco-container {
+  background: linear-gradient(145deg, #8B4513, #A0522D);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: inset 0 5px 15px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 500px;
+}
+
+.abaco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fila-abaco {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fila-label {
+  width: 40px;
+  font-weight: bold;
+  color: #FFD700;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.varilla {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(to bottom, #DEB887, #D2691E);
+  border-radius: 10px;
+  padding: 5px 10px;
+  flex: 1;
+}
+
+.bead {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.3), inset -2px -2px 5px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.bead.active {
+  background: radial-gradient(circle at 30% 30%, #ffd700, #ff8c00);
+  transform: scale(1.1);
+}
+
+/* Pregunta */
+.question-display {
+  font-size: 3.5em;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  padding: 20px;
+}
+
+.question-display .times { color: #ff6b6b; margin: 0 10px; }
+.question-display .equals { color: #666; margin: 0 10px; }
+
+.answer-input {
+  width: 120px;
+  height: 80px;
+  font-size: 3em;
+  text-align: center;
+  border: 4px solid #764ba2;
+  border-radius: 15px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.answer-input:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 20px rgba(255,107,107,0.3);
+}
+
+/* Temporizador */
+.timer-container {
+  width: 100%;
+  max-width: 400px;
+  height: 30px;
+  background: #eee;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2ed573, #ffa502, #ff6b6b);
+  width: 100%;
+  transition: width 0.1s linear;
+  border-radius: 15px;
+}
+
+/* Respuesta mostrada */
+.answer-reveal {
+  display: none;
+  font-size: 5em;
+  font-weight: bold;
+  color: #ff6b6b;
+  text-align: center;
+  animation: blink 0.5s ease-in-out infinite;
+}
+
+.answer-reveal.active { display: block; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+/* Feedback */
+.feedback {
+  font-size: 2em;
+  font-weight: bold;
+  min-height: 60px;
+  text-align: center;
+}
+
+.feedback.correct { color: #2ed573; }
+.feedback.wrong { color: #ff6b6b; }
+
+.points-gain {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #ffa502;
+  min-height: 30px;
+  text-align: center;
+}
+
+/* Estadísticas */
+.stats {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  width: 100%;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  flex-wrap: wrap;
+}
+
+.stat { text-align: center; }
+
+.stat-value {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #764ba2;
+}
+
+.stat-label { font-size: 0.9em; color: #666; }
+
+/* Progreso */
+.progress-dots {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ddd;
+  transition: all 0.3s;
+}
+
+.dot.correct { background: #2ed573; }
+.dot.wrong { background: #ff6b6b; }
+.dot.current { background: #ffa502; transform: scale(1.2); }
+
+/* Botones de control */
+.controls {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 15px 30px;
+  font-size: 1.2em;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: white;
+}
+
+.next-btn { background: #2ed573; }
+.skip-btn { background: #ffa502; }
+.retry-btn { background: #ff6b6b; }
+.purple-btn { background: linear-gradient(135deg, #667eea, #764ba2); }
+
+.control-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Modo repetición */
+.repetition-info {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: bold;
+  color: #856404;
+  display: none;
+}
+
+.repetition-info.active { display: block; }
+
+/* Final */
+.final-score {
+  font-size: 4em;
+  font-weight: bold;
+  color: #764ba2;
+}
+
+.final-message { font-size: 1.5em; text-align: center; }
+.stars { font-size: 3em; }
+
+.session-points {
+  font-size: 1.6em;
+  font-weight: bold;
+  color: #ffa502;
+}
+
+.badges-earned {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 500px;
+}
+
+.badge {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: bold;
+  color: #856404;
+  font-size: 0.95em;
+  animation: badgePop 0.5s ease;
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Pantalla de repaso */
+.review-title {
+  font-size: 2em;
+  font-weight: bold;
+  color: #764ba2;
+}
+
+.review-table {
+  width: 100%;
+  max-width: 420px;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+
+.review-table tr {
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.review-table tr:hover {
+  background: #ede7f6;
+  transform: scale(1.02);
+}
+
+.review-table td {
+  padding: 12px 18px;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #333;
+}
+
+.review-table td:first-child {
+  border-radius: 10px 0 0 10px;
+  color: #764ba2;
+}
+
+.review-table td:last-child {
+  border-radius: 0 10px 10px 0;
+  text-align: right;
+  color: #ff6b6b;
+}
+
+.review-hint { color: #666; text-align: center; font-size: 1.05em; }
+
+/* Perfil */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 15px;
+  color: white;
+}
+
+.profile-header .avatar {
+  width: 70px;
+  height: 70px;
+  font-size: 2em;
+  background: rgba(255,255,255,0.25);
+}
+
+.profile-name { font-size: 1.6em; font-weight: bold; }
+.profile-level { font-size: 1.1em; opacity: 0.95; }
+.profile-score { font-size: 1.2em; margin-top: 4px; }
+
+.level-bar-container {
+  width: 100%;
+  height: 22px;
+  background: #eee;
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.level-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ffa502, #ff6b6b);
+  border-radius: 11px;
+  transition: width 0.6s ease;
+}
+
+.level-info {
+  width: 100%;
+  text-align: center;
+  color: #666;
+  font-size: 0.95em;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.profile-stat {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 15px 10px;
+  text-align: center;
+}
+
+.profile-stat-value {
+  font-size: 1.6em;
+  font-weight: bold;
+  color: #764ba2;
+}
+
+.profile-stat-label { font-size: 0.85em; color: #666; }
+
+.badges-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.badge-locked {
+  background: #f1f2f6;
+  border: 2px dashed #b2bec3;
+  color: #b2bec3;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.9em;
+}
+
+.section-title {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #764ba2;
+  width: 100%;
+  text-align: center;
+}
+
+.history-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95em;
+}
+
+.history-table { font-weight: bold; color: #764ba2; }
+.history-score { font-weight: bold; color: #ffa502; }
+.history-date { color: #999; font-size: 0.85em; }
+
+/* Ranking */
+.rank-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.rank-item.me { background: #ede7f6; border: 2px solid #764ba2; }
+.rank-item.top1 { background: linear-gradient(135deg, #fff9c4, #ffe082); }
+.rank-item.top2 { background: #f5f5f5; }
+.rank-item.top3 { background: #ffe0b2; }
+
+.rank-pos {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #764ba2;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.rank-name { flex: 1; font-weight: bold; }
+.rank-score { font-weight: bold; color: #ffa502; font-size: 1.1em; }
+
+@media (max-width: 600px) {
+  .table-grid { grid-template-columns: repeat(2, 1fr); }
+  .mixed-btn { grid-column: span 2; }
+  .question-display { font-size: 2.5em; }
+  .answer-reveal { font-size: 3.5em; }
+  .bead { width: 20px; height: 20px; }
+  .profile-stats { grid-template-columns: repeat(2, 1fr); }
+  .stats { gap: 15px; }
+}
+</style>
+</head>
+<body>
+
+<h1>🧮 Tablas de Multiplicar con Ábaco</h1>
+
+<div class="container">
+
+  <!-- Pantalla de usuarios -->
+  <div class="screen active" id="userScreen">
+    <h2 style="color:#764ba2;">👤 ¿Quién va a jugar?</h2>
+    <div class="user-list" id="userList"></div>
+    <div class="create-user-form">
+      <div class="create-user-row">
+        <input type="text" id="newUserName" placeholder="Escribe tu nombre..." maxlength="15">
+      </div>
+      <div class="age-label">🎂 ¿Cuántos años tienes?</div>
+      <div class="create-user-row">
+        <input type="number" id="newUserAge" placeholder="Edad" min="4" max="99" style="max-width:120px;">
+        <button class="create-btn" onclick="createUser()">Crear</button>
+      </div>
+    </div>
+    <div style="color:#888; font-size:0.9em; text-align:center;">Tus puntos, niveles e insignias se guardan en este dispositivo.</div>
+  </div>
+
+  <!-- Menú principal -->
+  <div class="screen menu" id="menu">
+    <div class="user-bar">
+      <div class="avatar" id="menuAvatar">A</div>
+      <div class="user-info">
+        <div class="user-name" id="menuUserName">Usuario</div>
+        <div class="user-level" id="menuUserLevel">Nivel 1 · 0 ⭐</div>
+      </div>
+      <div class="user-bar-actions">
+        <button class="mini-btn" onclick="showProfile()">👤 Perfil</button>
+        <button class="mini-btn" onclick="showLeaderboard()">🏆 Ranking</button>
+        <button class="mini-btn" onclick="switchUser()">🔄 Cambiar</button>
+      </div>
+    </div>
+
+    <h2>Elige una tabla para practicar</h2>
+
+    <div class="time-selector">
+      <h3>⏱️ Tiempo para responder:</h3>
+      <div class="time-options">
+        <button class="time-btn" onclick="setTime(5000, this)">5s</button>
+        <button class="time-btn" onclick="setTime(8000, this)">8s</button>
+        <button class="time-btn" onclick="setTime(10000, this)">10s</button>
+        <button class="time-btn" onclick="setTime(12000, this)">12s</button>
+        <button class="time-btn selected" onclick="setTime(15000, this)">15s</button>
+      </div>
+    </div>
+
+    <div class="table-grid">
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(1)">1</button>
+        <button class="review-btn" onclick="showReview(1)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(2)">2</button>
+        <button class="review-btn" onclick="showReview(2)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(3)">3</button>
+        <button class="review-btn" onclick="showReview(3)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(4)">4</button>
+        <button class="review-btn" onclick="showReview(4)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(5)">5</button>
+        <button class="review-btn" onclick="showReview(5)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(6)">6</button>
+        <button class="review-btn" onclick="showReview(6)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(7)">7</button>
+        <button class="review-btn" onclick="showReview(7)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(8)">8</button>
+        <button class="review-btn" onclick="showReview(8)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(9)">9</button>
+        <button class="review-btn" onclick="showReview(9)">Repaso tabla</button>
+      </div>
+      <div class="table-cell">
+        <button class="table-btn" onclick="startTable(10)">10</button>
+        <button class="review-btn" onclick="showReview(10)">Repaso tabla</button>
+      </div>
+      <button class="table-btn mixed-btn" onclick="startMixed()">🎲 Mezclar todas las tablas</button>
+    </div>
+
+    <div style="margin-top: 10px; color: #666; text-align: center; max-width: 500px;">
+      <p><strong>Modo dinámico:</strong> Elige el tiempo que quieras para responder.<br>
+      Tras acertar o fallar, pasas al siguiente en 5 segundos (o pulsa Enter).</p>
+      <p style="margin-top: 10px;"><strong>Modo repetición:</strong> Los errores se repiten hasta acertar.</p>
+    </div>
+  </div>
+
+  <!-- Ejercicio -->
+  <div class="screen" id="exercise">
+    <button class="back-btn" onclick="quitSession()">← Volver al menú</button>
+
+    <div class="repetition-info" id="repetitionInfo">
+      📚 Modo repetición: ¡Vamos a practicar los que fallaste!
+    </div>
+
+    <div class="table-title" id="tableTitle">Tabla del 2</div>
+    <div style="font-size: 1.2em; color: #764ba2; font-weight: bold;" id="timeDisplay">⏱️ 15 segundos</div>
+
+    <div class="abaco-container">
+      <div class="abaco" id="abaco"></div>
+    </div>
+
+    <div class="question-display" id="question">
+      <span id="qNum1">2</span>
+      <span class="times">×</span>
+      <span id="qNum2">3</span>
+      <span class="equals">=</span>
+    </div>
+
+    <input type="number" class="answer-input" id="answerInput"
+           onkeypress="handleKeyPress(event)"
+           autocomplete="off" min="0">
+
+    <div class="timer-container">
+      <div class="timer-bar" id="timerBar"></div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="points-gain" id="pointsGain"></div>
+    <div class="answer-reveal" id="answerReveal"></div>
+
+    <div class="progress-dots" id="progressDots"></div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="correctCount">0</div>
+        <div class="stat-label">Aciertos</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalCount">0</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="streakCount">0</div>
+        <div class="stat-label">Racha</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="sessionPoints">0</div>
+        <div class="stat-label">⭐ Puntos</div>
+      </div>
+    </div>
+
+    <div class="controls" id="controls">
+      <button class="control-btn next-btn" onclick="nextQuestion()" id="nextBtn" style="display:none;">Siguiente →</button>
+      <button class="control-btn skip-btn" onclick="skipQuestion()" id="skipBtn">No sé, pasar</button>
+      <button class="control-btn retry-btn" onclick="retryQuestion()" id="retryBtn" style="display:none;">🔁 Intentar de nuevo</button>
+    </div>
+  </div>
+
+  <!-- Pantalla final -->
+  <div class="screen" id="finalScreen">
+    <h2>¡Has terminado la sesión!</h2>
+    <div class="final-score" id="finalScore">0%</div>
+    <div class="stars" id="finalStars"></div>
+    <div class="session-points" id="finalPoints">+0 ⭐ puntos</div>
+    <div class="final-message" id="finalMessage"></div>
+    <div class="badges-earned" id="badgesEarned"></div>
+    <div class="controls">
+      <button class="control-btn next-btn" onclick="goToMenu()">🏠 Volver al menú</button>
+      <button class="control-btn retry-btn" onclick="repeatWrong()">🔁 Practicar errores</button>
+    </div>
+  </div>
+
+  <!-- Pantalla de repaso -->
+  <div class="screen" id="reviewScreen">
+    <button class="back-btn" onclick="goToMenu()">← Volver al menú</button>
+    <div class="review-title" id="reviewTitle">📖 Tabla del 1</div>
+    <table class="review-table" id="reviewTable"></table>
+    <div class="review-hint">Lee la tabla en voz alta y trata de memorizar los resultados.</div>
+    <div class="controls">
+      <button class="control-btn next-btn" id="reviewPracticeBtn">✏️ Practicar esta tabla</button>
+    </div>
+  </div>
+
+  <!-- Pantalla de perfil -->
+  <div class="screen" id="profileScreen">
+    <button class="back-btn" onclick="goToMenu()">← Volver al menú</button>
+    <div class="profile-header">
+      <div class="avatar" id="profileAvatar">A</div>
+      <div>
+        <div class="profile-name" id="profileName">Usuario</div>
+        <div class="profile-level" id="profileLevel">Nivel 1 · Principiante</div>
+        <div class="profile-score" id="profileScore">0 ⭐ puntos</div>
+      </div>
+    </div>
+    <div class="level-bar-container">
+      <div class="level-bar" id="levelBar" style="width:0%"></div>
+    </div>
+    <div class="level-info" id="levelInfo"></div>
+
+    <div class="profile-stats">
+      <div class="profile-stat">
+        <div class="profile-stat-value" id="pSessions">0</div>
+        <div class="profile-stat-label">Sesiones</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value" id="pCorrect">0</div>
+        <div class="profile-stat-label">Aciertos</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value" id="pAccuracy">0%</div>
+        <div class="profile-stat-label">Precisión</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value" id="pBestStreak">0</div>
+        <div class="profile-stat-label">Mejor racha</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value" id="pTables">0/10</div>
+        <div class="profile-stat-label">Tablas practicadas</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-value" id="pAvgTime">-</div>
+        <div class="profile-stat-label">Tiempo medio</div>
+      </div>
+    </div>
+
+    <div class="section-title">🏅 Insignias</div>
+    <div class="badges-grid" id="badgesGrid"></div>
+
+    <div class="section-title">📜 Historial reciente</div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <!-- Pantalla de ranking -->
+  <div class="screen" id="leaderboardScreen">
+    <button class="back-btn" onclick="goToMenu()">← Volver al menú</button>
+    <h2 style="color:#764ba2;">🏆 Ranking de jugadores</h2>
+    <div class="rank-list" id="rankList"></div>
+  </div>
+
+</div>
+
+<script>
+// ============ DATOS Y PERSISTENCIA ============
+const STORAGE_KEY = 'tablas_users_v1';
+let users = [];
+let currentUserIndex = -1;
+
+const LEVELS = [
+  { min: 0,     name: 'Principiante 🌱' },
+  { min: 150,   name: 'Aprendiz 📚' },
+  { min: 400,   name: 'Estudiante ✏️' },
+  { min: 800,   name: 'Practicante 🎯' },
+  { min: 1400,  name: 'Avanzado 🚀' },
+  { min: 2200,  name: 'Experto 🏅' },
+  { min: 3200,  name: 'Maestro 🎓' },
+  { min: 4500,  name: 'Genio 🧠' },
+  { min: 6000,  name: 'Leyenda 👑' }
+];
+
+const BADGES = [
+  { id: 'first_session', icon: '🎯', name: 'Primera sesión', desc: 'Completa tu primera sesión' },
+  { id: 'perfect',       icon: '💯', name: 'Perfecto', desc: '100% de aciertos en una sesión (mín. 10)' },
+  { id: 'streak5',       icon: '🔥', name: 'Racha x5', desc: 'Consigue 5 aciertos seguidos' },
+  { id: 'streak10',      icon: '⚡', name: 'Racha x10', desc: 'Consigue 10 aciertos seguidos' },
+  { id: 'speed',         icon: '🏃', name: 'Velocista', desc: 'Acerta en menos de 2 segundos' },
+  { id: 'all_tables',    icon: '🌟', name: 'Todas las tablas', desc: 'Practica las 10 tablas' },
+  { id: 'score500',      icon: '💰', name: '500 puntos', desc: 'Alcanza 500 puntos' },
+  { id: 'score2000',     icon: '👑', name: '2000 puntos', desc: 'Alcanza 2000 puntos' },
+  { id: 'sessions10',    icon: '📚', name: 'Constante', desc: 'Completa 10 sesiones' }
+];
+
+function loadUsers() {
+  try {
+    users = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch (e) { users = []; }
+}
+
+function saveUsers() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+}
+
+function currentUser() {
+  return currentUserIndex >= 0 ? users[currentUserIndex] : null;
+}
+
+function getLevel(score) {
+  let idx = 0;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (score >= LEVELS[i].min) idx = i;
+  }
+  const cur = LEVELS[idx];
+  const next = LEVELS[idx + 1] || null;
+  const progress = next
+    ? ((score - cur.min) / (next.min - cur.min)) * 100
+    : 100;
+  return { number: idx + 1, name: cur.name, next, progress: Math.min(100, progress) };
+}
+
+// Adaptación por edades (configuración silenciosa, sin explicar al jugador)
+function getAgeConfig(age) {
+  if (age <= 7)  return { defaultTimeMs: 15000, pointsMult: 1.5, mixedMaxTable: 5 };
+  if (age <= 10) return { defaultTimeMs: 12000, pointsMult: 1.2, mixedMaxTable: 10 };
+  if (age <= 12) return { defaultTimeMs: 10000, pointsMult: 1.0, mixedMaxTable: 10 };
+  return { defaultTimeMs: 8000, pointsMult: 1.0, mixedMaxTable: 10 };
+}
+
+function newUserData(name, age) {
+  return {
+    name,
+    age,
+    createdAt: new Date().toISOString(),
+    score: 0,
+    sessions: 0,
+    totalCorrect: 0,
+    totalWrong: 0,
+    bestStreak: 0,
+    totalTimeMs: 0,
+    totalAnswersTimed: 0,
+    tablesCompleted: {},
+    badges: [],
+    history: []
+  };
+}
+
+// ============ PANTALLA DE USUARIOS ============
+function renderUserList() {
+  const list = document.getElementById('userList');
+  list.innerHTML = '';
+  if (users.length === 0) {
+    list.innerHTML = '<div style="color:#888; text-align:center;">Aún no hay jugadores. ¡Crea el primero!</div>';
+    return;
+  }
+  users.forEach((u, i) => {
+    const lvl = getLevel(u.score);
+    const item = document.createElement('div');
+    item.className = 'user-item';
+    item.innerHTML = `
+      <div class="avatar">${u.name[0].toUpperCase()}</div>
+      <div class="user-item-info">
+        <div class="user-item-name">${escapeHtml(u.name)}${u.age ? ` · ${u.age} años` : ''}</div>
+        <div class="user-item-meta">Nivel ${lvl.number} · ${u.score} ⭐ · ${u.sessions} sesiones</div>
+      </div>
+      <button class="delete-user" title="Borrar jugador" onclick="event.stopPropagation(); deleteUser(${i})">✕</button>
+    `;
+    item.onclick = () => selectUser(i);
+    list.appendChild(item);
+  });
+}
+
+function createUser() {
+  const input = document.getElementById('newUserName');
+  const ageInput = document.getElementById('newUserAge');
+  const name = input.value.trim();
+  const age = parseInt(ageInput.value);
+
+  if (!name) { input.focus(); return; }
+  if (isNaN(age) || age < 4 || age > 99) {
+    alert('Por favor, escribe una edad válida (entre 4 y 99 años).');
+    ageInput.focus();
+    return;
+  }
+  if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+    alert('Ya existe un jugador con ese nombre.');
+    return;
+  }
+  users.push(newUserData(name, age));
+  saveUsers();
+  currentUserIndex = users.length - 1;
+  input.value = '';
+  ageInput.value = '';
+  enterMenu();
+}
+
+function selectUser(i) {
+  currentUserIndex = i;
+  enterMenu();
+}
+
+function deleteUser(i) {
+  if (!confirm(`¿Borrar a "${users[i].name}" y todo su progreso?`)) return;
+  users.splice(i, 1);
+  saveUsers();
+  renderUserList();
+}
+
+function switchUser() {
+  currentUserIndex = -1;
+  showScreen('userScreen');
+  renderUserList();
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// ============ NAVEGACIÓN ============
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function enterMenu() {
+  const u = currentUser();
+  if (!u) { switchUser(); return; }
+  const lvl = getLevel(u.score);
+  document.getElementById('menuAvatar').textContent = u.name[0].toUpperCase();
+  document.getElementById('menuUserName').textContent = u.name;
+  document.getElementById('menuUserLevel').textContent =
+    `Nivel ${lvl.number} · ${lvl.name} · ${u.score} ⭐`;
+  applyAgeDefaults(u);
+  showScreen('menu');
+}
+
+function applyAgeDefaults(u) {
+  if (!u) return;
+  const age = u.age || 10;
+  const cfg = getAgeConfig(age);
+  selectedTimeMs = cfg.defaultTimeMs;
+
+  // Marcar el botón de tiempo correspondiente
+  document.querySelectorAll('.time-btn').forEach(b => {
+    const ms = parseInt(b.getAttribute('onclick').match(/\d+/)[0]);
+    b.classList.toggle('selected', ms === cfg.defaultTimeMs);
+  });
+
+  // Botón de mezcla adaptado a la edad
+  const mixedBtn = document.querySelector('.mixed-btn');
+  if (mixedBtn) {
+    mixedBtn.textContent = cfg.mixedMaxTable < 10
+      ? `🎲 Mezclar tablas (del 1 al ${cfg.mixedMaxTable})`
+      : '🎲 Mezclar todas las tablas';
+  }
+}
+
+function goToMenu() {
+  clearInterval(timerInterval);
+  clearTimeout(autoAdvanceTimer);
+  enterMenu();
+}
+
+// ============ CONFIGURACIÓN DE JUEGO ============
+let selectedTimeMs = 15000;
+
+function setTime(ms, btn) {
+  selectedTimeMs = ms;
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ============ ESTADO DE SESIÓN ============
+let currentTable = 1;
+let questions = [];
+let currentIndex = 0;
+let correctAnswers = 0;
+let totalAnswers = 0;
+let streak = 0;
+let wrongAnswers = [];
+let timerInterval = null;
+let autoAdvanceTimer = null;
+const AUTO_ADVANCE_MS = 5000;
+let isMixedMode = false;
+let isAnswerShown = false;
+let questionStartTime = 0;
+let sessionPoints = 0;
+let sessionNewBadges = [];
+let fastestAnswerMs = Infinity;
+let lastAnswerWasCorrect = false;
+
+// ============ TABLAS Y SESIÓN ============
+function startTable(table) {
+  currentTable = table;
+  isMixedMode = false;
+  questions = [];
+  for (let i = 1; i <= 10; i++) {
+    questions.push({ num1: table, num2: i, answer: table * i });
+  }
+  questions = shuffleArray(questions);
+  startSession();
+}
+
+function startMixed() {
+  isMixedMode = true;
+  currentTable = null;
+  questions = [];
+
+  const u = currentUser();
+  const cfg = getAgeConfig(u && u.age ? u.age : 10);
+  const maxTable = cfg.mixedMaxTable;
+
+  for (let t = 1; t <= maxTable; t++) {
+    for (let i = 1; i <= 10; i++) {
+      questions.push({ num1: t, num2: i, answer: t * i });
+    }
+  }
+  questions = shuffleArray(questions);
+  startSession();
+}
+
+function startSession() {
+  currentIndex = 0;
+  correctAnswers = 0;
+  totalAnswers = 0;
+  streak = 0;
+  wrongAnswers = [];
+  sessionPoints = 0;
+  sessionNewBadges = [];
+  fastestAnswerMs = Infinity;
+
+  document.getElementById('repetitionInfo').classList.remove('active');
+  document.getElementById('tableTitle').textContent =
+    isMixedMode ? '🎲 Tablas mezcladas' : `Tabla del ${currentTable}`;
+  document.getElementById('timeDisplay').textContent =
+    `⏱️ ${selectedTimeMs / 1000} segundos`;
+  document.getElementById('sessionPoints').textContent = '0';
+
+  showScreen('exercise');
+  createProgressDots();
+  showQuestion();
+}
+
+function quitSession() {
+  if (totalAnswers > 0 && !confirm('¿Seguro que quieres salir? No se guardará la sesión.')) return;
+  goToMenu();
+}
+
+function createProgressDots() {
+  const container = document.getElementById('progressDots');
+  container.innerHTML = '';
+  questions.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    if (i === currentIndex) dot.classList.add('current');
+    container.appendChild(dot);
+  });
+}
+
+function updateProgressDots() {
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((dot, i) => {
+    dot.classList.remove('current');
+    if (i === currentIndex) dot.classList.add('current');
+  });
+}
+
+function showQuestion() {
+  if (currentIndex >= questions.length) {
+    finishSession();
+    return;
+  }
+
+  const q = questions[currentIndex];
+  document.getElementById('qNum1').textContent = q.num1;
+  document.getElementById('qNum2').textContent = q.num2;
+
+  const input = document.getElementById('answerInput');
+  input.value = '';
+  input.style.display = 'block';
+  input.focus();
+
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('pointsGain').textContent = '';
+  document.getElementById('answerReveal').classList.remove('active');
+  document.getElementById('answerReveal').textContent = '';
+
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('retryBtn').style.display = 'none';
+  document.getElementById('skipBtn').style.display = 'block';
+
+  drawAbacus(q.num1, q.num2);
+  questionStartTime = Date.now();
+  startTimer();
+  isAnswerShown = false;
+  lastAnswerWasCorrect = false;
+}
+
+function drawAbacus(rows, beadsPerRow) {
+  const abaco = document.getElementById('abaco');
+  abaco.innerHTML = '';
+
+  const maxRows = Math.min(rows, 10);
+  const maxBeads = Math.min(beadsPerRow, 10);
+
+  for (let i = 0; i < maxRows; i++) {
+    const fila = document.createElement('div');
+    fila.className = 'fila-abaco';
+
+    const label = document.createElement('div');
+    label.className = 'fila-label';
+    label.textContent = i === Math.floor(maxRows / 2) ? `${rows}×` : '';
+    fila.appendChild(label);
+
+    const varilla = document.createElement('div');
+    varilla.className = 'varilla';
+
+    for (let j = 0; j < maxBeads; j++) {
+      const bead = document.createElement('div');
+      bead.className = 'bead';
+      bead.style.animationDelay = `${(i * maxBeads + j) * 30}ms`;
+      varilla.appendChild(bead);
+    }
+
+    fila.appendChild(varilla);
+    abaco.appendChild(fila);
+  }
+}
+
+// ============ TEMPORIZADOR ============
+function startTimer() {
+  clearInterval(timerInterval);
+  const bar = document.getElementById('timerBar');
+  bar.style.width = '100%';
+
+  const startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const timeLeft = Math.max(0, selectedTimeMs - elapsed);
+    bar.style.width = `${(timeLeft / selectedTimeMs) * 100}%`;
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      showAnswer();
+    }
+  }, 50);
+}
+
+// ============ PUNTOS ============
+function calcPoints(elapsedMs) {
+  const u = currentUser();
+  const cfg = getAgeConfig(u && u.age ? u.age : 10);
+  const base = 10;
+  const speedRatio = Math.max(0, 1 - elapsedMs / selectedTimeMs);
+  const bonus = Math.round(15 * speedRatio);
+  return Math.round((base + bonus) * cfg.pointsMult);
+}
+
+function addPoints(pts) {
+  sessionPoints += pts;
+  document.getElementById('sessionPoints').textContent = sessionPoints;
+  document.getElementById('pointsGain').textContent = `+${pts} ⭐`;
+}
+
+// ============ RESPUESTAS ============
+function handleKeyPress(event) {
+  if (event.key === 'Enter') {
+    const nextBtn = document.getElementById('nextBtn');
+    if (nextBtn.style.display === 'block') {
+      nextQuestion();
+    } else {
+      checkAnswer();
+    }
+  }
+}
+
+function checkAnswer() {
+  if (isAnswerShown || lastAnswerWasCorrect) return;
+
+  const input = document.getElementById('answerInput');
+  const userAnswer = parseInt(input.value);
+  const q = questions[currentIndex];
+
+  if (isNaN(userAnswer)) return;
+
+  clearInterval(timerInterval);
+  totalAnswers++;
+  const elapsed = Date.now() - questionStartTime;
+
+  if (userAnswer === q.answer) {
+    correctAnswers++;
+    streak++;
+    lastAnswerWasCorrect = true;
+    fastestAnswerMs = Math.min(fastestAnswerMs, elapsed);
+
+    const pts = calcPoints(elapsed);
+    addPoints(pts);
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = '✅ ¡Correcto!';
+    feedback.className = 'feedback correct';
+
+    document.querySelectorAll('.bead').forEach((bead, i) => {
+      setTimeout(() => bead.classList.add('active'), i * 50);
+    });
+
+    updateStats();
+    document.getElementById('nextBtn').style.display = 'block';
+    document.getElementById('skipBtn').style.display = 'none';
+    updateCurrentDot(true);
+    startAutoAdvance();
+  } else {
+    wrongAnswers.push(q);
+    streak = 0;
+
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = `❌ Incorrecto. La respuesta es ${q.answer}`;
+    feedback.className = 'feedback wrong';
+
+    const reveal = document.getElementById('answerReveal');
+    reveal.textContent = q.answer;
+    reveal.classList.add('active');
+
+    input.style.display = 'none';
+
+    updateStats();
+    updateCurrentDot(false);
+    document.getElementById('nextBtn').style.display = 'block';
+    document.getElementById('skipBtn').style.display = 'none';
+    startAutoAdvance();
+  }
+}
+
+function startAutoAdvance() {
+  clearTimeout(autoAdvanceTimer);
+  autoAdvanceTimer = setTimeout(() => nextQuestion(), AUTO_ADVANCE_MS);
+}
+
+function showAnswer() {
+  if (lastAnswerWasCorrect) return;
+  isAnswerShown = true;
+  totalAnswers++;
+  const q = questions[currentIndex];
+  wrongAnswers.push(q);
+  streak = 0;
+
+  const reveal = document.getElementById('answerReveal');
+  reveal.textContent = q.answer;
+  reveal.classList.add('active');
+
+  const feedback = document.getElementById('feedback');
+  feedback.textContent = `⏰ Tiempo agotado. La respuesta es ${q.answer}`;
+  feedback.className = 'feedback wrong';
+
+  document.getElementById('answerInput').style.display = 'none';
+
+  updateStats();
+  updateCurrentDot(false);
+
+  clearTimeout(autoAdvanceTimer);
+  autoAdvanceTimer = setTimeout(() => nextQuestion(), AUTO_ADVANCE_MS);
+}
+
+function skipQuestion() {
+  if (isAnswerShown || lastAnswerWasCorrect) return;
+
+  clearInterval(timerInterval);
+  const q = questions[currentIndex];
+  wrongAnswers.push(q);
+  streak = 0;
+
+  const reveal = document.getElementById('answerReveal');
+  reveal.textContent = q.answer;
+  reveal.classList.add('active');
+
+  const feedback = document.getElementById('feedback');
+  feedback.textContent = `La respuesta es ${q.answer}`;
+  feedback.className = 'feedback wrong';
+
+  totalAnswers++;
+  updateStats();
+  updateCurrentDot(false);
+
+  document.getElementById('answerInput').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'block';
+  document.getElementById('skipBtn').style.display = 'none';
+  startAutoAdvance();
+}
+
+function retryQuestion() {
+  document.getElementById('answerInput').style.display = 'block';
+  isAnswerShown = false;
+  showQuestion();
+}
+
+function nextQuestion() {
+  clearTimeout(autoAdvanceTimer);
+  clearInterval(timerInterval);
+  document.getElementById('answerInput').style.display = 'block';
+  currentIndex++;
+  updateProgressDots();
+  showQuestion();
+}
+
+function updateStats() {
+  document.getElementById('correctCount').textContent = correctAnswers;
+  document.getElementById('totalCount').textContent = totalAnswers;
+  document.getElementById('streakCount').textContent = streak;
+}
+
+function updateCurrentDot(isCorrect) {
+  const dots = document.querySelectorAll('.dot');
+  if (dots[currentIndex]) {
+    dots[currentIndex].classList.remove('current');
+    dots[currentIndex].classList.add(isCorrect ? 'correct' : 'wrong');
+  }
+}
+
+// ============ FIN DE SESIÓN Y GAMIFICACIÓN ============
+function awardBadge(id) {
+  const u = currentUser();
+  if (!u || u.badges.includes(id)) return false;
+  u.badges.push(id);
+  const b = BADGES.find(x => x.id === id);
+  if (b) sessionNewBadges.push(b);
+  return true;
+}
+
+function finishSession() {
+  clearInterval(timerInterval);
+  clearTimeout(autoAdvanceTimer);
+
+  const u = currentUser();
+  const percentage = totalAnswers > 0
+    ? Math.round((correctAnswers / totalAnswers) * 100)
+    : 0;
+
+  u.score += sessionPoints;
+  u.sessions++;
+  u.totalCorrect += correctAnswers;
+  u.totalWrong += totalAnswers - correctAnswers;
+  u.bestStreak = Math.max(u.bestStreak, streak);
+  if (fastestAnswerMs !== Infinity) {
+    u.totalTimeMs += fastestAnswerMs;
+    u.totalAnswersTimed++;
+  }
+  if (!isMixedMode && currentTable) {
+    u.tablesCompleted[currentTable] = (u.tablesCompleted[currentTable] || 0) + 1;
+  }
+
+  // Insignias
+  awardBadge('first_session');
+  if (percentage === 100 && totalAnswers >= 10) awardBadge('perfect');
+  if (streak >= 5 || u.bestStreak >= 5) awardBadge('streak5');
+  if (streak >= 10 || u.bestStreak >= 10) awardBadge('streak10');
+  if (fastestAnswerMs < 2000) awardBadge('speed');
+  if (Object.keys(u.tablesCompleted).length >= 10) awardBadge('all_tables');
+  if (u.score >= 500) awardBadge('score500');
+  if (u.score >= 2000) awardBadge('score2000');
+  if (u.sessions >= 10) awardBadge('sessions10');
+
+  u.history.unshift({
+    table: isMixedMode ? 'Mezcla' : currentTable,
+    score: sessionPoints,
+    correct: correctAnswers,
+    total: totalAnswers,
+    date: new Date().toISOString()
+  });
+  u.history = u.history.slice(0, 20);
+
+  saveUsers();
+
+  // Pantalla final
+  document.getElementById('finalScore').textContent = `${percentage}%`;
+  document.getElementById('finalPoints').textContent = `+${sessionPoints} ⭐ puntos`;
+
+  let stars = '', message = '';
+  if (percentage >= 90) {
+    stars = '⭐⭐⭐';
+    message = '¡Excelente! ¡Eres un genio de las tablas! 🎉';
+  } else if (percentage >= 70) {
+    stars = '⭐⭐';
+    message = '¡Muy bien! Sigue practicando. 💪';
+  } else if (percentage >= 50) {
+    stars = '⭐';
+    message = '¡Buen intento! Practica más para mejorar. 📚';
+  } else {
+    stars = '🌟';
+    message = '¡Sigue intentando! La práctica hace al maestro. 🔁';
+  }
+  document.getElementById('finalStars').textContent = stars;
+  document.getElementById('finalMessage').textContent = message;
+
+  const badgesDiv = document.getElementById('badgesEarned');
+  badgesDiv.innerHTML = '';
+  sessionNewBadges.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'badge';
+    el.textContent = `${b.icon} ${b.name}`;
+    el.title = b.desc;
+    badgesDiv.appendChild(el);
+  });
+
+  showScreen('finalScreen');
+}
+
+function repeatWrong() {
+  if (wrongAnswers.length === 0) {
+    alert('¡No hay respuestas incorrectas para practicar! 🎉');
+    return;
+  }
+  questions = shuffleArray([...wrongAnswers]);
+  wrongAnswers = [];
+  document.getElementById('repetitionInfo').classList.add('active');
+
+  currentIndex = 0;
+  correctAnswers = 0;
+  totalAnswers = 0;
+  streak = 0;
+  sessionPoints = 0;
+  sessionNewBadges = [];
+  fastestAnswerMs = Infinity;
+  document.getElementById('sessionPoints').textContent = '0';
+
+  showScreen('exercise');
+  createProgressDots();
+  showQuestion();
+}
+
+// ============ REPASO ============
+function showReview(table) {
+  document.getElementById('reviewTitle').textContent = `📖 Tabla del ${table}`;
+
+  const tbody = document.getElementById('reviewTable');
+  tbody.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${table} × ${i} =</td><td>${table * i}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const practiceBtn = document.getElementById('reviewPracticeBtn');
+  practiceBtn.onclick = () => startTable(table);
+
+  showScreen('reviewScreen');
+}
+
+// ============ PERFIL ============
+function showProfile() {
+  const u = currentUser();
+  if (!u) return;
+  const lvl = getLevel(u.score);
+  const total = u.totalCorrect + u.totalWrong;
+  const accuracy = total > 0 ? Math.round((u.totalCorrect / total) * 100) : 0;
+  const avgTime = u.totalAnswersTimed > 0
+    ? (u.totalTimeMs / u.totalAnswersTimed / 1000).toFixed(1) + 's'
+    : '-';
+
+  document.getElementById('profileAvatar').textContent = u.name[0].toUpperCase();
+  document.getElementById('profileName').textContent =
+    u.age ? `${u.name} · ${u.age} años` : u.name;
+  document.getElementById('profileLevel').textContent = `Nivel ${lvl.number} · ${lvl.name}`;
+  document.getElementById('profileScore').textContent = `${u.score} ⭐ puntos`;
+  document.getElementById('levelBar').style.width = `${lvl.progress}%`;
+  document.getElementById('levelInfo').textContent = lvl.next
+    ? `Faltan ${lvl.next.min - u.score} puntos para ${lvl.next.name}`
+    : '¡Nivel máximo alcanzado! 👑';
+
+  document.getElementById('pSessions').textContent = u.sessions;
+  document.getElementById('pCorrect').textContent = u.totalCorrect;
+  document.getElementById('pAccuracy').textContent = `${accuracy}%`;
+  document.getElementById('pBestStreak').textContent = u.bestStreak;
+  document.getElementById('pTables').textContent = `${Object.keys(u.tablesCompleted).length}/10`;
+  document.getElementById('pAvgTime').textContent = avgTime;
+
+  const badgesGrid = document.getElementById('badgesGrid');
+  badgesGrid.innerHTML = '';
+  BADGES.forEach(b => {
+    const earned = u.badges.includes(b.id);
+    const el = document.createElement('div');
+    el.className = earned ? 'badge' : 'badge-locked';
+    el.textContent = earned ? `${b.icon} ${b.name}` : `${b.icon} ${b.name}`;
+    el.title = b.desc;
+    if (!earned) el.style.opacity = '0.5';
+    badgesGrid.appendChild(el);
+  });
+
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = '';
+  if (u.history.length === 0) {
+    historyList.innerHTML = '<div style="color:#888; text-align:center;">Sin sesiones todavía.</div>';
+  } else {
+    u.history.forEach(h => {
+      const pct = h.total > 0 ? Math.round((h.correct / h.total) * 100) : 0;
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `
+        <span class="history-table">${h.table === 'Mezcla' ? '🎲 Mezcla' : 'Tabla ' + h.table}</span>
+        <span>${h.correct}/${h.total} (${pct}%)</span>
+        <span class="history-score">+${h.score} ⭐</span>
+        <span class="history-date">${new Date(h.date).toLocaleDateString('es-ES')}</span>
+      `;
+      historyList.appendChild(item);
+    });
+  }
+
+  showScreen('profileScreen');
+}
+
+// ============ RANKING ============
+function showLeaderboard() {
+  const sorted = users
+    .map((u, i) => ({ ...u, index: i }))
+    .sort((a, b) => b.score - a.score);
+
+  const list = document.getElementById('rankList');
+  list.innerHTML = '';
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="color:#888; text-align:center;">No hay jugadores todavía.</div>';
+  } else {
+    sorted.forEach((u, pos) => {
+      const lvl = getLevel(u.score);
+      const item = document.createElement('div');
+      let cls = 'rank-item';
+      if (u.index === currentUserIndex) cls += ' me';
+      if (pos === 0) cls += ' top1';
+      if (pos === 1) cls += ' top2';
+      if (pos === 2) cls += ' top3';
+      item.className = cls;
+      const medal = pos === 0 ? '🥇' : pos === 1 ? '🥈' : pos === 2 ? '🥉' : `#${pos + 1}`;
+      item.innerHTML = `
+        <div class="rank-pos">${medal}</div>
+        <div class="rank-name">${escapeHtml(u.name)}<br>
+          <small style="font-weight:normal;color:#777;">Nivel ${lvl.number} · ${u.sessions} sesiones</small>
+        </div>
+        <div class="rank-score">${u.score} ⭐</div>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  showScreen('leaderboardScreen');
+}
+
+// ============ UTILIDADES ============
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+document.getElementById('answerInput').addEventListener('input', function () {
+  if (this.value.length >= 3) checkAnswer();
+});
+
+document.getElementById('newUserName').addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') document.getElementById('newUserAge').focus();
+});
+
+document.getElementById('newUserAge').addEventListener('keypress', function (e) {
+  if (e.key === 'Enter') createUser();
+});
+
+// ============ INICIO ============
+loadUsers();
+renderUserList();
+</script>
+
+</body>
+</html>
