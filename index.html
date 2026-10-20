@@ -3,9 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#667eea">
 <title>Tablas de Multiplicar con Ábaco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* ============================================
+   TOKENS (Open Design + Potencia tu Proyecto)
+   ============================================ */
 :root {
+  /* Color */
   --primary: #764ba2;
   --primary-light: #667eea;
   --grad-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -21,6 +29,8 @@
   --c-orange2: #ee5a24;
   --c-violet: #6c5ce7;
   --c-emerald: #20bf6b;
+
+  /* Surface (Open Design) */
   --bg-page: #f3f0f8;
   --bg-card: #ffffff;
   --bg-soft: #f8f9fa;
@@ -28,19 +38,84 @@
   --text: #333333;
   --text-muted: #666666;
   --text-faint: #888888;
-  --border-soft: #e9ecef;
-  --shadow-lg: 0 20px 60px rgba(0,0,0,0.18);
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.08);
-  --radius-lg: clamp(14px, 3vw, 20px);
-  --radius-md: clamp(10px, 2vw, 15px);
-  --radius-sm: 8px;
+  --border-soft: rgba(0, 0, 0, 0.08);
+
+  /* Elevation en capas (Material / Open Design) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 24px 60px rgba(0,0,0,0.14);
+  --shadow-glow: 0 0 0 4px rgba(118, 75, 162, 0.12);
+
+  /* Radius */
+  --radius-lg: clamp(16px, 3vw, 24px);
+  --radius-md: clamp(12px, 2.5vw, 16px);
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+
+  /* Spacing fluid */
   --space-xs: clamp(6px, 1.5vw, 10px);
   --space-sm: clamp(10px, 2.5vw, 15px);
   --space-md: clamp(14px, 3vw, 20px);
-  --space-lg: clamp(20px, 4vw, 30px);
-  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --font: 'Segoe UI', system-ui, -apple-system, Tahoma, Geneva, Verdana, sans-serif;
+  --space-lg: clamp(20px, 4vw, 32px);
+  --space-xl: clamp(28px, 6vw, 48px);
+
+  /* Container gutters (Open Design responsive contract) */
+  --container-max: 960px;
+  --gutter: 16px;
+
+  /* Motion (Open Design) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 150ms;
+  --dur-base: 300ms;
+  --dur-slow: 500ms;
+  --transition: var(--dur-base) var(--ease-out);
+  --transition-fast: var(--dur-fast) var(--ease-out);
+
+  /* Typography (Open Design: Inter) */
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-weight-reg: 400;
+  --font-weight-med: 500;
+  --font-weight-semi: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 800;
+}
+
+/* Gutters por dispositivo (Open Design: 36 / 24 / 16) */
+@media (min-width: 1025px) { :root { --gutter: 36px; } }
+@media (min-width: 601px) and (max-width: 1024px) { :root { --gutter: 24px; } }
+
+/* Dark mode (Open Design: Contemporary) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #0f0e1a;
+    --bg-card: #1a1829;
+    --bg-soft: #242038;
+    --bg-soft2: #2f2a48;
+    --text: #f0eef8;
+    --text-muted: #b0aac8;
+    --text-faint: #7d7799;
+    --border-soft: rgba(255, 255, 255, 0.08);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.45), 0 24px 60px rgba(0,0,0,0.5);
+  }
+  .container { border: 1px solid var(--border-soft); }
+  .user-item, .time-selector, .stats, .profile-stat, .history-item, .rank-item {
+    border-color: var(--border-soft);
+  }
+  .review-btn { background: var(--bg-soft); }
+  .create-user-form input, .time-btn {
+    background: var(--bg-soft);
+    color: var(--text);
+    border-color: var(--bg-soft2);
+  }
+  .badge-locked { background: var(--bg-soft2); color: var(--text-faint); border-color: var(--text-faint); }
+  .answer-input { color: var(--text); }
+  .back-btn { background: var(--bg-soft2); color: var(--text); }
+  .dot { background: var(--bg-soft2); }
+  .level-bar-container, .timer-container { background: var(--bg-soft2); }
+  .repetition-info { background: rgba(255, 193, 7, 0.15); color: #ffe082; border-color: rgba(255, 193, 7, 0.4); }
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -49,29 +124,70 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font);
-  background: var(--grad-primary);
-  background-attachment: fixed;
+  font-weight: var(--font-weight-reg);
+  background: var(--bg-page);
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-md);
-  padding-top: max(var(--space-md), env(safe-area-inset-top));
-  padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
-  padding-left: max(var(--space-md), env(safe-area-inset-left));
-  padding-right: max(var(--space-md), env(safe-area-inset-right));
+  padding: var(--gutter);
+  padding-top: max(var(--gutter), env(safe-area-inset-top));
+  padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Orbes de fondo vivos (Potencia tu Proyecto) */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform;
+  animation: orbDrift 18s ease-in-out infinite alternate;
+}
+body::before {
+  width: min(60vw, 520px);
+  height: min(60vw, 520px);
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.55), transparent 70%);
+  top: -15%;
+  right: -10%;
+}
+body::after {
+  width: min(50vw, 420px);
+  height: min(50vw, 420px);
+  background: radial-gradient(circle, rgba(118, 75, 162, 0.5), transparent 70%);
+  bottom: -10%;
+  left: -8%;
+  animation-delay: -9s;
+  animation-duration: 22s;
+}
+
+@keyframes orbDrift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(24px, -18px, 0) scale(1.06); }
+  100% { transform: translate3d(-18px, 22px, 0) scale(0.96); }
 }
 
 h1 {
-  color: white;
+  color: var(--text);
   margin-bottom: var(--space-md);
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
-  font-size: clamp(1.3rem, 5vw, 2em);
+  font-size: clamp(1.4rem, 5vw, 2.1em);
+  font-weight: var(--font-weight-black);
   text-align: center;
+  letter-spacing: -0.02em;
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .container {
@@ -79,13 +195,32 @@ h1 {
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   box-shadow: var(--shadow-lg);
-  max-width: min(920px, 100%);
+  border: 1px solid var(--border-soft);
+  max-width: min(var(--container-max), 100%);
   width: 100%;
   min-height: min(500px, 80vh);
+  position: relative;
 }
 
+/* Entrada dinámica de pantallas */
 .screen { display: none; flex-direction: column; align-items: center; gap: var(--space-md); }
-.screen.active { display: flex; }
+.screen.active {
+  display: flex;
+  animation: screenIn var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Focus accesible (Open Design) */
+:focus-visible {
+  outline: 3px solid var(--primary-light);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+button:focus:not(:focus-visible) { outline: none; }
 
 .menu {
   display: flex;
@@ -262,11 +397,11 @@ h1 {
 }
 @media (hover: hover) { .create-btn:hover { transform: translateY(-2px); } }
 
-/* ---- Tablas (grid auto-adaptativo) ---- */
+/* ---- Tablas (grid auto-adaptativo + bento) ---- */
 .table-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
-  gap: clamp(8px, 2vw, 15px);
+  gap: clamp(8px, 2vw, 14px);
   width: 100%;
 }
 
@@ -274,20 +409,37 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  animation: cellIn var(--dur-slow) var(--ease-out) both;
+}
+.table-cell:nth-child(1) { animation-delay: 40ms; }
+.table-cell:nth-child(2) { animation-delay: 80ms; }
+.table-cell:nth-child(3) { animation-delay: 120ms; }
+.table-cell:nth-child(4) { animation-delay: 160ms; }
+.table-cell:nth-child(5) { animation-delay: 200ms; }
+.table-cell:nth-child(6) { animation-delay: 240ms; }
+.table-cell:nth-child(7) { animation-delay: 280ms; }
+.table-cell:nth-child(8) { animation-delay: 320ms; }
+.table-cell:nth-child(9) { animation-delay: 360ms; }
+.table-cell:nth-child(10) { animation-delay: 400ms; }
+
+@keyframes cellIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .table-btn {
   width: 100%;
   padding: clamp(14px, 3.5vw, 20px);
   font-size: clamp(1.4em, 4.5vw, 2em);
-  font-weight: bold;
+  font-weight: var(--font-weight-black);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: transform var(--transition), box-shadow var(--transition);
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--transition);
   color: white;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
   min-height: 64px;
+  box-shadow: var(--shadow-sm);
 }
 
 .table-cell:nth-child(1) .table-btn { background: var(--c-red); }
@@ -618,13 +770,14 @@ h1 {
 .control-btn {
   padding: 12px clamp(18px, 4vw, 30px);
   font-size: clamp(1em, 3vw, 1.2em);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: transform var(--transition), box-shadow var(--transition);
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--transition);
   color: white;
   min-height: 48px;
+  box-shadow: var(--shadow-sm);
 }
 
 .next-btn { background: var(--c-green); }
@@ -634,11 +787,11 @@ h1 {
 
 @media (hover: hover) {
   .control-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.18);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: var(--shadow-md);
   }
 }
-.control-btn:active { transform: scale(0.97); }
+.control-btn:active { transform: scale(0.96); }
 
 /* ---- Modo repetición ---- */
 .repetition-info {
@@ -886,27 +1039,27 @@ h1 {
 .rank-score { font-weight: bold; color: var(--c-orange); font-size: clamp(1em, 3vw, 1.1em); }
 
 /* ============================================
-   BREAKPOINTS (estilo potenciatuproyecto)
+   BREAKPOINTS (Potencia tu Proyecto + Open Design)
    ============================================ */
 
 /* Tablet grande */
 @media (max-width: 1024px) {
-  .container { max-width: min(760px, 100%); }
+  .container { max-width: min(820px, 100%); }
 }
 
-/* Tablet / móvil landscape */
+/* Tablet / móvil */
 @media (max-width: 768px) {
   .container { padding: var(--space-md); }
   .stats { gap: 12px; }
   .rank-item { padding: 10px 12px; }
+  body::before, body::after { filter: blur(70px); opacity: 0.7; }
 }
 
 /* Móvil */
 @media (max-width: 480px) {
-  body { padding: 12px; }
   .container {
     padding: 14px;
-    border-radius: 14px;
+    border-radius: 16px;
     min-height: auto;
   }
   .user-bar { padding: 10px 12px; gap: 8px; }
@@ -935,6 +1088,7 @@ h1 {
   .question-display { font-size: 2rem; padding: 4px 0; }
   .answer-input { height: 56px; width: 90px; font-size: 1.8rem; }
   .feedback { min-height: 32px; }
+  body::before, body::after { display: none; }
 }
 
 /* Accesibilidad: reducir movimiento */
@@ -945,8 +1099,10 @@ h1 {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  body::before, body::after { animation: none !important; }
   .answer-reveal { animation: none !important; opacity: 1 !important; }
   .mixed-btn { animation: none !important; background-position: 50% 50% !important; }
+  .screen.active, .table-cell { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
 
 /* Hover solo en dispositivos con ratón */
