@@ -652,12 +652,18 @@ button:focus:not(:focus-visible) { outline: none; }
   width: clamp(100px, 28vw, 130px);
   height: clamp(64px, 18vw, 85px);
   font-size: clamp(2rem, 8vw, 3em);
+  font-weight: var(--font-weight-black);
+  color: #1a1a2e;
   text-align: center;
   border: 4px solid var(--primary);
   border-radius: var(--radius-md);
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
   -moz-appearance: textfield;
+  background: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  .answer-input { background: var(--bg-soft); color: #f0eef8; }
 }
 .answer-input::-webkit-outer-spin-button,
 .answer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboard · Tablas de Multiplicar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --primary: #764ba2;
+  --primary-light: #667eea;
+  --grad: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg: #0f0e1a;
+  --bg-card: #1a1829;
+  --bg-soft: #242038;
+  --bg-soft2: #2f2a48;
+  --text: #f0eef8;
+  --text-muted: #b0aac8;
+  --text-faint: #7d7799;
+  --border: rgba(255,255,255,0.08);
+  --green: #2ed573;
+  --orange: #ffa502;
+  --red: #ff6b6b;
+  --shadow: 0 8px 24px rgba(0,0,0,0.4), 0 24px 60px rgba(0,0,0,0.5);
+  --radius: 16px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: clamp(12px, 3vw, 24px);
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed;
+  width: min(60vw, 500px);
+  height: min(60vw, 500px);
+  background: radial-gradient(circle, rgba(118,75,162,0.35), transparent 70%);
+  filter: blur(90px);
+  top: -15%;
+  right: -10%;
+  z-index: -1;
+  pointer-events: none;
+  animation: drift 20s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  from { transform: translate(0,0) scale(1); }
+  to { transform: translate(-30px, 25px) scale(1.08); }
+}
+
+/* ---- Login ---- */
+.login-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: clamp(24px, 6vw, 40px);
+  width: 100%;
+  max-width: 400px;
+  animation: fadeUp 0.5s var(--ease, ease-out) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.login-card h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.login-card p {
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  font-family: var(--font);
+  background: var(--bg-soft);
+  border: 2px solid var(--bg-soft2);
+  border-radius: 10px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--primary-light); }
+.login-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--font);
+  background: var(--grad);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(118,75,162,0.4); }
+.login-error {
+  color: var(--red);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 10px;
+  min-height: 20px;
+}
+.login-hint {
+  margin-top: 18px;
+  padding: 10px;
+  background: var(--bg-soft);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ---- Dashboard ---- */
+.dash { display: none; max-width: 1100px; margin: 0 auto; }
+.dash.active { display: block; animation: fadeUp 0.4s ease-out both; }
+
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.dash-title {
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+  font-weight: 800;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.dash-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dash-btn {
+  padding: 9px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font);
+  background: var(--bg-soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dash-btn:hover { background: var(--bg-soft2); }
+.dash-btn.danger { color: var(--red); }
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 14px;
+  text-align: center;
+}
+.kpi-value {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 800;
+  color: var(--primary-light);
+}
+.kpi-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (min-width: 768px) {
+  .charts-grid { grid-template-columns: 1fr 1fr; }
+  .chart-card.full { grid-column: 1 / -1; }
+}
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+.chart-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.chart-wrap { position: relative; width: 100%; max-height: 300px; }
+
+.users-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.users-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 600px; }
+th {
+  text-align: left;
+  padding: 10px 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+.user-cell { display: flex; align-items: center; gap: 10px; }
+.user-av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--grad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.badge-sm {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(118,75,162,0.25);
+  color: var(--primary-light);
+}
+.empty {
+  text-align: center;
+  color: var(--text-faint);
+  padding: 40px 16px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.footer-note {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  margin-top: 24px;
+  padding-bottom: 20px;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <h1>📊 Dashboard Privado</h1>
+    <p>Tablas de Multiplicar · Panel de análisis</p>
+    <div class="field">
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" placeholder="tu@correo.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="tryLogin()">Entrar</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint">
+      Acceso restringido al propietario.<br>
+      Los datos se leen del navegador donde juegas.
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dash">
+  <div class="dash-header">
+    <div class="dash-title">📊 Dashboard de uso</div>
+    <div class="dash-actions">
+      <button class="dash-btn" onclick="refresh()">🔄 Actualizar</button>
+      <button class="dash-btn" onclick="exportData()">⬇️ Exportar JSON</button>
+      <button class="dash-btn danger" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>🏆 Puntuación por jugador</h3>
+      <div class="chart-wrap"><canvas id="chartScore"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🎯 Precisión por jugador (%)</h3>
+      <div class="chart-wrap"><canvas id="chartAccuracy"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>⏱️ Tiempo medio de respuesta (s)</h3>
+      <div class="chart-wrap"><canvas id="chartTime"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🏅 Insignias desbloqueadas</h3>
+      <div class="chart-wrap"><canvas id="chartBadges"></canvas></div>
+    </div>
+    <div class="chart-card full">
+      <h3>📈 Evolución de sesiones (puntos por sesión)</h3>
+      <div class="chart-wrap"><canvas id="chartHistory"></canvas></div>
+    </div>
+  </div>
+
+  <div class="users-section">
+    <h3>👥 Detalle por jugador</h3>
+    <div id="usersTable"></div>
+  </div>
+
+  <div class="footer-note">
+    Dashboard privado · Los datos se cargan del almacenamiento local de este navegador<br>
+    <a href="index.html" style="color: var(--primary-light);">← Volver al juego</a>
+  </div>
+</div>
+
+<script>
+// ============ CREDENCIALES (cámbialas aquí) ============
+// Solo tú accedes. Edita estos dos valores en el archivo.
+const DASH_EMAIL = 'admin@tablas.com';
+const DASH_PASS  = 'admin2026';  // Cambia esta contraseña
+
+// Hash simple para no guardar la contraseña en claro en el código visible
+async function hashStr(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+let authed = false;
+
+async function tryLogin() {
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const pass = document.getElementById('password').value;
+  const err = document.getElementById('loginError');
+
+  const [emailHash, passHash] = await Promise.all([
+    hashStr(DASH_EMAIL.toLowerCase()),
+    hashStr(DASH_PASS)
+  ]);
+
+  if (await hashStr(email) === emailHash && await hashStr(pass) === passHash) {
+    authed = true;
+    sessionStorage.setItem('dash_auth', '1');
+    showDash();
+  } else {
+    err.textContent = 'Correo o contraseña incorrectos.';
+    document.getElementById('password').value = '';
+  }
+}
+
+function showDash() {
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('dash').classList.add('active');
+  renderAll();
+}
+
+function logout() {
+  sessionStorage.removeItem('dash_auth');
+  location.reload();
+}
+
+// Enter en el formulario
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+// ============ DATOS ============
+const STORAGE_KEY = 'tablas_users_v1';
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch (e) { return []; }
+}
+
+// ============ RENDER ============
+let charts = {};
+
+const PALETTE = ['#667eea','#2ed573','#ffa502','#ff6b6b','#1e90ff','#a55eea','#00d2d3','#ee5a24','#6c5ce7','#20bf6b'];
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+}
+
+function renderAll() {
+  const users = loadData();
+  destroyCharts();
+
+  if (users.length === 0) {
+    document.getElementById('kpis').innerHTML = '';
+    document.getElementById('usersTable').innerHTML =
+      '<div class="empty">No hay datos todavía.<br>Juega alguna sesión en el dispositivo y vuelve aquí.</div>';
+    return;
+  }
+
+  // KPIs globales
+  const totalSessions = users.reduce((s,u) => s + (u.sessions||0), 0);
+  const totalScore = users.reduce((s,u) => s + (u.score||0), 0);
+  const totalCorrect = users.reduce((s,u) => s + (u.totalCorrect||0), 0);
+  const totalWrong = users.reduce((s,u) => s + (u.totalWrong||0), 0);
+  const totalAns = totalCorrect + totalWrong;
+  const globalAcc = totalAns > 0 ? Math.round((totalCorrect/totalAns)*100) : 0;
+  const allBadges = users.reduce((s,u) => s + ((u.badges||[]).length), 0);
+
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-value">${users.length}</div><div class="kpi-label">Jugadores</div></div>
+    <div class="kpi"><div class="kpi-value">${totalSessions}</div><div class="kpi-label">Sesiones</div></div>
+    <div class="kpi"><div class="kpi-value">${totalScore}</div><div class="kpi-label">Puntos totales</div></div>
+    <div class="kpi"><div class="kpi-value">${globalAcc}%</div><div class="kpi-label">Precisión global</div></div>
+    <div class="kpi"><div class="kpi-value">${allBadges}</div><div class="kpi-label">Insignias</div></div>
+  `;
+
+  const names = users.map(u => u.name);
+  const colors = users.map((_,i) => PALETTE[i % PALETTE.length]);
+
+  // Score chart
+  charts.score = new Chart(document.getElementById('chartScore'), {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [{
+        label: 'Puntos',
+        data: users.map(u => u.score||0),
+        backgroundColor: colors,
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: chartOpts(yTitle => yTitle)
+  });
+
+  // Accuracy chart
+  charts.acc = new Chart(document.getElementById('chartAccuracy'), {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [{
+        label: 'Precisión %',
+        data: users.map(u => {
+          const t = (u.totalCorrect||0)+(u.totalWrong||0);
+          return t > 0 ? Math.round((u.totalCorrect/t)*100) : 0;
+        }),
+        backgroundColor: colors,
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      ...chartOpts(),
+      scales: {
+        ...baseScales(),
+        y: { ...baseScales().y, max: 100, ticks: { callback: v => v+'%' } }
+      }
+    }
+  });
+
+  // Time chart
+  charts.time = new Chart(document.getElementById('chartTime'), {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [{
+        label: 'Tiempo medio (s)',
+        data: users.map(u =>
+          (u.totalAnswersTimed||0) > 0
+            ? +(u.totalTimeMs / u.totalAnswersTimed / 1000).toFixed(1)
+            : 0
+        ),
+        backgroundColor: colors,
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: chartOpts()
+  });
+
+  // Badges chart
+  charts.badges = new Chart(document.getElementById('chartBadges'), {
+    type: 'doughnut',
+    data: {
+      labels: names,
+      datasets: [{
+        data: users.map(u => (u.badges||[]).length),
+        backgroundColor: colors,
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#b0aac8', padding: 12, usePointStyle: true } }
+      }
+    }
+  });
+
+  // History chart (multi-line)
+  const maxLen = Math.max(...users.map(u => (u.history||[]).length), 1);
+  const labelsH = Array.from({length: maxLen}, (_,i) => `S${maxLen - i}`);
+  charts.hist = new Chart(document.getElementById('chartHistory'), {
+    type: 'line',
+    data: {
+      labels: labelsH,
+      datasets: users.map((u,idx) => ({
+        label: u.name,
+        data: (u.history||[]).map(h => h.score||0),
+        borderColor: colors[idx % colors.length],
+        backgroundColor: colors[idx % colors.length] + '33',
+        tension: 0.35,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }))
+    },
+    options: {
+      ...chartOpts(),
+      plugins: {
+        legend: { labels: { color: '#b0aac8', usePointStyle: true, padding: 14 } }
+      }
+    }
+  });
+
+  // Table
+  let html = `<table>
+    <thead><tr>
+      <th>Jugador</th><th>Edad</th><th>Nivel</th><th>Puntos</th>
+      <th>Sesiones</th><th>Aciertos</th><th>Fallos</th><th>Precisión</th>
+      <th>Mejor racha</th><th>Tiempo med.</th><th>Tablas</th><th>Insignias</th>
+    </tr></thead><tbody>`;
+
+  users.forEach((u,i) => {
+    const t = (u.totalCorrect||0)+(u.totalWrong||0);
+    const acc = t > 0 ? Math.round((u.totalCorrect/t)*100) : 0;
+    const avg = (u.totalAnswersTimed||0) > 0
+      ? (u.totalTimeMs/u.totalAnswersTimed/1000).toFixed(1)+'s' : '–';
+    const lvl = getLevelName(u.score||0);
+    const tabs = Object.keys(u.tablesCompleted||{}).length;
+    const bdg = (u.badges||[]).length;
+    html += `<tr>
+      <td><div class="user-cell"><div class="user-av" style="background:${PALETTE[i%PALETTE.length]}">${u.name[0].toUpperCase()}</div>${esc(u.name)}</div></td>
+      <td>${u.age||'–'}</td>
+      <td><span class="badge-sm">${lvl}</span></td>
+      <td><strong>${u.score||0}</strong></td>
+      <td>${u.sessions||0}</td>
+      <td style="color:var(--green)">${u.totalCorrect||0}</td>
+      <td style="color:var(--red)">${u.totalWrong||0}</td>
+      <td>${acc}%</td>
+      <td>${u.bestStreak||0}</td>
+      <td>${avg}</td>
+      <td>${tabs}/10</td>
+      <td>${bdg}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('usersTable').innerHTML = html;
+}
+
+function baseScales() {
+  return {
+    x: { ticks: { color: '#b0aac8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+    y: { ticks: { color: '#b0aac8' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+  };
+}
+
+function chartOpts() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: baseScales()
+  };
+}
+
+function getLevelName(score) {
+  const L = [
+    [0,'🌱'],[150,'📚'],[400,'✏️'],[800,'🎯'],[1400,'🚀'],
+    [2200,'🏅'],[3200,'🎓'],[4500,'🧠'],[6000,'👑']
+  ];
+  let n = '🌱';
+  L.forEach(([m,ic]) => { if (score >= m) n = ic; });
+  return n;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function refresh() { renderAll(); }
+
+function exportData() {
+  const data = loadData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tablas-datos-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Auto-login si ya hay sesión
+if (sessionStorage.getItem('dash_auth') === '1') {
+  authed = true;
+  showDash();
+}
+</script>
+
+</body>
+</html>
