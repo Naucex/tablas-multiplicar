@@ -367,27 +367,16 @@ tr:last-child td { border-bottom: none; }
 // ============ CREDENCIALES (cámbialas aquí) ============
 // Solo tú accedes. Edita estos dos valores en el archivo.
 const DASH_EMAIL = 'naucex25@gmail.com';
-const DASH_PASS  = 'Micampo2026<';
-
-// Hash simple para no guardar la contraseña en claro en el código visible
-async function hashStr(s) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
+const DASH_PASS  = 'Micampo2026';
 
 let authed = false;
 
-async function tryLogin() {
+function tryLogin() {
   const email = document.getElementById('email').value.trim().toLowerCase();
   const pass = document.getElementById('password').value;
   const err = document.getElementById('loginError');
 
-  const [emailHash, passHash] = await Promise.all([
-    hashStr(DASH_EMAIL.toLowerCase()),
-    hashStr(DASH_PASS)
-  ]);
-
-  if (await hashStr(email) === emailHash && await hashStr(pass) === passHash) {
+  if (email === DASH_EMAIL.toLowerCase() && pass === DASH_PASS) {
     authed = true;
     sessionStorage.setItem('dash_auth', '1');
     showDash();
