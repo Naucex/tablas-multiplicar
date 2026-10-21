@@ -1123,6 +1123,172 @@ button:focus:not(:focus-visible) { outline: none; }
   .back-btn:hover,
   .delete-user:hover { transform: none; }
 }
+/* ============================================
+   TECLADO VIRTUAL (Open Design)
+   ============================================ */
+.keypad-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 14, 26, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 900;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.keypad-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+
+.keypad {
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-sm) var(--space-sm) max(var(--space-sm), env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform var(--dur-slow) var(--ease-spring);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.keypad-overlay.open .keypad {
+  transform: translateY(0);
+}
+
+.keypad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 10px;
+}
+
+.keypad-value {
+  font-size: 1.6rem;
+  font-weight: var(--font-weight-black);
+  color: var(--text);
+  min-width: 60px;
+  letter-spacing: 0.05em;
+}
+.keypad-value.empty { color: var(--text-faint); }
+
+.keypad-close {
+  background: var(--bg-soft);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+@media (hover: hover) { .keypad-close:hover { background: var(--bg-soft2); } }
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.key {
+  min-height: 56px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font);
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--transition-fast), background var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.key:active {
+  transform: scale(0.93);
+  box-shadow: none;
+}
+
+.key-num {
+  background: var(--bg-soft);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
+}
+@media (hover: hover) { .key-num:hover { background: var(--bg-soft2); } }
+
+.key-fn {
+  background: var(--bg-soft2);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  border: 1px solid var(--border-soft);
+}
+@media (hover: hover) { .key-fn:hover { background: var(--bg-soft); color: var(--text); } }
+
+.key-ok {
+  background: var(--grad-primary);
+  color: white;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 14px rgba(118, 75, 162, 0.4);
+  grid-column: span 1;
+}
+@media (hover: hover) { .key-ok:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(118,75,162,0.5); } }
+
+.key-back {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 14px rgba(255,107,107,0.35);
+}
+@media (hover: hover) { .key-back:hover { transform: translateY(-2px); } }
+
+.key-zero { grid-column: span 1; }
+
+/* Desktop: teclado como panel lateral derecha */
+@media (min-width: 901px) {
+  .keypad-overlay {
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: var(--gutter);
+  }
+  .keypad {
+    max-width: 280px;
+    border-radius: var(--radius-lg);
+    transform: translateX(30px) scale(0.96);
+    opacity: 0;
+    transition: transform var(--dur-slow) var(--ease-spring), opacity var(--dur-base) var(--ease-out);
+    padding-bottom: var(--space-sm);
+  }
+  .keypad-overlay.open .keypad {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  .key { min-height: 52px; }
+}
+
+/* Landscape móvil: teclado más compacto */
+@media (max-height: 500px) and (orientation: landscape) {
+  .key { min-height: 44px; font-size: 1.2rem; }
+  .keypad-value { font-size: 1.3rem; }
+  .keypad-grid { gap: 6px; }
+}
+
+/* Input oculto nativo: visible solo para valores */
+.answer-input.readonly-native {
+  caret-color: transparent;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
@@ -1376,6 +1542,31 @@ button:focus:not(:focus-visible) { outline: none; }
     <div class="rank-list" id="rankList"></div>
   </div>
 
+</div>
+
+<!-- Teclado virtual numérico (Open Design) -->
+<div class="keypad-overlay" id="keypadOverlay" onclick="closeKeypad(event)">
+  <div class="keypad" onclick="event.stopPropagation()">
+    <div class="keypad-header">
+      <div class="keypad-value empty" id="keypadValue">_</div>
+      <button class="keypad-close" onclick="closeKeypad()" aria-label="Cerrar teclado">✕</button>
+    </div>
+    <div class="keypad-grid">
+      <button class="key key-num" onclick="keyDigit(1)">1</button>
+      <button class="key key-num" onclick="keyDigit(2)">2</button>
+      <button class="key key-num" onclick="keyDigit(3)">3</button>
+      <button class="key key-num" onclick="keyDigit(4)">4</button>
+      <button class="key key-num" onclick="keyDigit(5)">5</button>
+      <button class="key key-num" onclick="keyDigit(6)">6</button>
+      <button class="key key-num" onclick="keyDigit(7)">7</button>
+      <button class="key key-num" onclick="keyDigit(8)">8</button>
+      <button class="key key-num" onclick="keyDigit(9)">9</button>
+      <button class="key key-fn" onclick="keyClear()" aria-label="Borrar todo">C</button>
+      <button class="key key-num key-zero" onclick="keyDigit(0)">0</button>
+      <button class="key key-back" onclick="keyBackspace()" aria-label="Borrar último">⌫</button>
+      <button class="key key-ok" style="grid-column: 1 / -1;" onclick="keyConfirm()" aria-label="Confirmar">✓ Confirmar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1839,6 +2030,8 @@ function checkAnswer() {
     reveal.classList.add('active');
 
     input.style.display = 'none';
+    closeKeypad();
+    keypadBuffer = '';
 
     updateStats();
     updateCurrentDot(false);
@@ -1856,6 +2049,8 @@ function startAutoAdvance() {
 function showAnswer() {
   if (lastAnswerWasCorrect) return;
   isAnswerShown = true;
+  closeKeypad();
+  keypadBuffer = '';
   totalAnswers++;
   const q = questions[currentIndex];
   wrongAnswers.push(q);
@@ -1882,6 +2077,8 @@ function skipQuestion() {
   if (isAnswerShown || lastAnswerWasCorrect) return;
 
   clearInterval(timerInterval);
+  closeKeypad();
+  keypadBuffer = '';
   const q = questions[currentIndex];
   wrongAnswers.push(q);
   streak = 0;
@@ -1913,6 +2110,8 @@ function retryQuestion() {
 function nextQuestion() {
   clearTimeout(autoAdvanceTimer);
   clearInterval(timerInterval);
+  closeKeypad();
+  keypadBuffer = '';
   document.getElementById('answerInput').style.display = 'block';
   currentIndex++;
   updateProgressDots();
@@ -2177,6 +2376,80 @@ document.getElementById('newUserName').addEventListener('keypress', function (e)
 
 document.getElementById('newUserAge').addEventListener('keypress', function (e) {
   if (e.key === 'Enter') createUser();
+});
+
+// ============ TECLADO VIRTUAL ============
+let keypadBuffer = '';
+
+function openKeypad() {
+  const input = document.getElementById('answerInput');
+  if (input.style.display === 'none') return;
+  if (lastAnswerWasCorrect || isAnswerShown) return;
+  keypadBuffer = input.value || '';
+  updateKeypadDisplay();
+  document.getElementById('keypadOverlay').classList.add('open');
+}
+
+function closeKeypad(e) {
+  if (e && e.target !== document.getElementById('keypadOverlay')) return;
+  document.getElementById('keypadOverlay').classList.remove('open');
+}
+
+function updateKeypadDisplay() {
+  const el = document.getElementById('keypadValue');
+  if (keypadBuffer === '') {
+    el.textContent = '_';
+    el.classList.add('empty');
+  } else {
+    el.textContent = keypadBuffer;
+    el.classList.remove('empty');
+  }
+}
+
+function syncInput() {
+  document.getElementById('answerInput').value = keypadBuffer;
+}
+
+function keyDigit(d) {
+  if (keypadBuffer.length >= 3) return;
+  keypadBuffer += String(d);
+  updateKeypadDisplay();
+  syncInput();
+  checkAnswer();
+}
+
+function keyBackspace() {
+  keypadBuffer = keypadBuffer.slice(0, -1);
+  updateKeypadDisplay();
+  syncInput();
+}
+
+function keyClear() {
+  keypadBuffer = '';
+  updateKeypadDisplay();
+  syncInput();
+}
+
+function keyConfirm() {
+  if (keypadBuffer === '') return;
+  closeKeypad();
+  checkAnswer();
+}
+
+// Abrir teclado al tocar el input (sustituye al teclado nativo)
+document.getElementById('answerInput').addEventListener('focus', function (e) {
+  e.preventDefault();
+  openKeypad();
+});
+document.getElementById('answerInput').addEventListener('click', function (e) {
+  e.preventDefault();
+  openKeypad();
+});
+document.getElementById('answerInput').setAttribute('readonly', 'readonly');
+document.getElementById('answerInput').classList.add('readonly-native');
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closeKeypad();
 });
 
 // ============ INICIO ============
