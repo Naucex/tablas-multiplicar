@@ -1297,7 +1297,8 @@ button:focus:not(:focus-visible) { outline: none; }
         <button class="create-btn" onclick="createUser()">Crear</button>
       </div>
     </div>
-    <div style="color: var(--text-faint); font-size: 0.9em; text-align: center;">Tus puntos, niveles e insignias se guardan en este dispositivo.</div>
+    <div id="cloudStatus" style="color: var(--text-faint); font-size: 0.9em; text-align: center;">Nube: conectando...</div>
+    <div style="color: var(--text-faint); font-size: 0.9em; text-align: center;">Tus puntos, niveles e insignias se guardan en Supabase y en este dispositivo.</div>
   </div>
 
   <!-- Menú principal -->
@@ -1558,8 +1559,172 @@ button:focus:not(:focus-visible) { outline: none; }
 <script>
 // ============ DATOS Y PERSISTENCIA ============
 const STORAGE_KEY = 'tablas_users_v1';
+const PENDING_DELETES_KEY = 'tablas_pending_deletes_v1';
+const CLOUD_URL = 'https://jflzwlfxmacphefrleac.supabase.co';
+const CLOUD_KEY = 'sb_publishable_Q53Wg5MSTEEZTkg1Hs6IyQ_iAt3hlSn';
+const CLOUD_HEADERS = {
+  apikey: CLOUD_KEY,
+  Authorization: `Bearer ${CLOUD_KEY}`,
+  'Content-Type': 'application/json'
+};
+
 let users = [];
 let currentUserIndex = -1;
+let cloudPlayers = [];
+let cloudOnline = false;
+
+function randomToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function ensureCloudIdentity(u) {
+  let changed = false;
+  if (!u.id) { u.id = crypto.randomUUID(); changed = true; }
+  if (!u.token) { u.token = randomToken(); changed = true; }
+  if (!u.updatedAt) { u.updatedAt = u.createdAt || new Date().toISOString(); changed = true; }
+  return changed;
+}
+
+async function cloudRequest(path, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${CLOUD_URL}${path}`, {
+      ...options,
+      headers: { ...CLOUD_HEADERS, ...(options.headers || {}) },
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      let message = `Error ${res.status}`;
+      try {
+        const body = await res.json();
+        message = body.message || body.hint || message;
+      } catch (e) {}
+      throw new Error(message);
+    }
+    if (res.status === 204) return null;
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function cloudRpc(name, payload) {
+  return cloudRequest(`/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+function getPendingDeletes() {
+  try {
+    const list = JSON.parse(localStorage.getItem(PENDING_DELETES_KEY));
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function savePendingDeletes(list) {
+  localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(list));
+}
+
+function setCloudStatus(ok) {
+  cloudOnline = ok === true;
+  const el = document.getElementById('cloudStatus');
+  if (!el) return;
+  if (ok === null) {
+    el.textContent = 'Nube: conectando...';
+    el.style.color = 'var(--text-faint)';
+  } else if (ok) {
+    el.textContent = 'Nube: conectada. Progreso sincronizado.';
+    el.style.color = 'var(--c-green)';
+  } else {
+    el.textContent = 'Nube: sin conexión. El progreso se guarda en este dispositivo.';
+    el.style.color = 'var(--c-orange)';
+  }
+}
+
+async function syncPlayerCloud(u) {
+  if (!u || !u.id || !u.token) return false;
+  try {
+    const data = JSON.parse(JSON.stringify(u));
+    delete data.token;
+    await cloudRpc('sync_player', {
+      p_id: u.id,
+      p_token: u.token,
+      p_data: data
+    });
+    setCloudStatus(true);
+    const idx = cloudPlayers.findIndex(p => p.id === u.id);
+    const merged = { ...data, id: u.id };
+    if (idx >= 0) cloudPlayers[idx] = merged;
+    else cloudPlayers.push(merged);
+    return true;
+  } catch (err) {
+    console.warn('No se pudo sincronizar con Supabase:', err);
+    setCloudStatus(false);
+    return false;
+  }
+}
+
+async function refreshCloudPlayers() {
+  try {
+    const rows = await cloudRequest('/rest/v1/players_public?select=id,data,updated_at');
+    cloudPlayers = (rows || []).map(row => ({
+      ...row.data,
+      id: row.id,
+      updatedAt: row.updated_at
+    }));
+    setCloudStatus(true);
+    return true;
+  } catch (err) {
+    console.warn('No se pudo cargar el ranking de Supabase:', err);
+    setCloudStatus(false);
+    return false;
+  }
+}
+
+async function flushPendingDeletes() {
+  const pending = getPendingDeletes();
+  if (pending.length === 0) return;
+
+  const remaining = [];
+  for (const item of pending) {
+    try {
+      await cloudRpc('delete_player', {
+        p_id: item.id,
+        p_token: item.token
+      });
+    } catch (err) {
+      console.warn('No se pudo borrar el jugador en Supabase:', err);
+      remaining.push(item);
+    }
+  }
+  savePendingDeletes(remaining);
+  if (remaining.length === 0) setCloudStatus(true);
+  else setCloudStatus(false);
+}
+
+async function initCloud() {
+  setCloudStatus(null);
+  await flushPendingDeletes();
+  await refreshCloudPlayers();
+  for (const u of users) {
+    const remote = cloudPlayers.find(p => p.id === u.id);
+    const localTime = Date.parse(u.updatedAt || 0);
+    const remoteTime = Date.parse(remote?.updatedAt || 0);
+    if (!remote || localTime > remoteTime) {
+      await syncPlayerCloud(u);
+    }
+  }
+  await refreshCloudPlayers();
+}
+
+window.addEventListener('online', initCloud);
 
 const LEVELS = [
   { min: 0,     name: 'Principiante 🌱' },
@@ -1587,8 +1752,14 @@ const BADGES = [
 
 function loadUsers() {
   try {
-    users = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    users = Array.isArray(parsed) ? parsed : [];
   } catch (e) { users = []; }
+  let changed = false;
+  users.forEach(u => {
+    if (ensureCloudIdentity(u)) changed = true;
+  });
+  if (changed) saveUsers();
 }
 
 function saveUsers() {
@@ -1622,9 +1793,12 @@ function getAgeConfig(age) {
 
 function newUserData(name, age) {
   return {
+    id: crypto.randomUUID(),
+    token: randomToken(),
     name,
     age,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     score: 0,
     sessions: 0,
     totalCorrect: 0,
@@ -1679,8 +1853,10 @@ function createUser() {
     alert('Ya existe un jugador con ese nombre.');
     return;
   }
-  users.push(newUserData(name, age));
+  const user = newUserData(name, age);
+  users.push(user);
   saveUsers();
+  syncPlayerCloud(user);
   currentUserIndex = users.length - 1;
   input.value = '';
   ageInput.value = '';
@@ -1692,11 +1868,19 @@ function selectUser(i) {
   enterMenu();
 }
 
-function deleteUser(i) {
-  if (!confirm(`¿Borrar a "${users[i].name}" y todo su progreso?`)) return;
+async function deleteUser(i) {
+  const user = users[i];
+  if (!user || !confirm(`¿Borrar a "${user.name}" y todo su progreso?`)) return;
   users.splice(i, 1);
   saveUsers();
   renderUserList();
+
+  if (user.id && user.token) {
+    const pending = getPendingDeletes();
+    pending.push({ id: user.id, token: user.token });
+    savePendingDeletes(pending);
+    await flushPendingDeletes();
+  }
 }
 
 function switchUser() {
@@ -2170,8 +2354,10 @@ function finishSession() {
     date: new Date().toISOString()
   });
   u.history = u.history.slice(0, 20);
+  u.updatedAt = new Date().toISOString();
 
   saveUsers();
+  syncPlayerCloud(u);
 
   document.getElementById('finalScore').textContent = `${percentage}%`;
   document.getElementById('finalPoints').textContent = `+${sessionPoints} ⭐ puntos`;
@@ -2309,10 +2495,17 @@ function showProfile() {
 }
 
 // ============ RANKING ============
+function leaderboardData() {
+  const map = new Map();
+  cloudPlayers.forEach(p => map.set(p.id, { ...p }));
+  users.forEach(u => map.set(u.id, { ...u }));
+  return Array.from(map.values());
+}
+
 function showLeaderboard() {
-  const sorted = users
-    .map((u, i) => ({ ...u, index: i }))
-    .sort((a, b) => b.score - a.score);
+  const me = currentUser();
+  const sorted = leaderboardData()
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
 
   const list = document.getElementById('rankList');
   list.innerHTML = '';
@@ -2321,10 +2514,10 @@ function showLeaderboard() {
     list.innerHTML = '<div style="color: var(--text-faint); text-align: center;">No hay jugadores todavía.</div>';
   } else {
     sorted.forEach((u, pos) => {
-      const lvl = getLevel(u.score);
+      const lvl = getLevel(u.score || 0);
       const item = document.createElement('div');
       let cls = 'rank-item';
-      if (u.index === currentUserIndex) cls += ' me';
+      if (me && u.id === me.id) cls += ' me';
       if (pos === 0) cls += ' top1';
       if (pos === 1) cls += ' top2';
       if (pos === 2) cls += ' top3';
@@ -2505,6 +2698,7 @@ if ('serviceWorker' in navigator) {
 // ============ INICIO ============
 loadUsers();
 renderUserList();
+initCloud();
 </script>
 
 </body>

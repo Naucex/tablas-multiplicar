@@ -311,7 +311,7 @@ tr:last-child td { border-bottom: none; }
     <div class="login-error" id="loginError"></div>
     <div class="login-hint">
       Acceso restringido al propietario.<br>
-      Los datos se leen del navegador donde juegas.
+      Los datos se leen de Supabase, no de este navegador.
     </div>
   </div>
 </div>
@@ -358,42 +358,91 @@ tr:last-child td { border-bottom: none; }
   </div>
 
   <div class="footer-note">
-    Dashboard privado · Los datos se cargan del almacenamiento local de este navegador<br>
+    Dashboard privado · Datos de Supabase · Pulsa Actualizar para refrescar<br>
     <a href="index.html" style="color: var(--primary-light);">← Volver al juego</a>
   </div>
 </div>
 
 <script>
-// ============ CREDENCIALES (cámbialas aquí) ============
-// Solo tú accedes. Edita estos dos valores en el archivo.
-const DASH_EMAIL = 'naucex25@gmail.com';
-const DASH_PASS  = 'Micampo2026';
+// ============ SUPABASE ============
+const CLOUD_URL = 'https://jflzwlfxmacphefrleac.supabase.co';
+const CLOUD_KEY = 'sb_publishable_Q53Wg5MSTEEZTkg1Hs6IyQ_iAt3hlSn';
 
 let authed = false;
+let dashEmail = '';
+let dashPassword = '';
+let dashUsers = [];
 
-function tryLogin() {
+async function cloudRpc(name, payload) {
+  const res = await fetch(`${CLOUD_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: {
+      apikey: CLOUD_KEY,
+      Authorization: `Bearer ${CLOUD_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!res.ok) {
+    let message = 'Error de conexión';
+    try {
+      const body = await res.json();
+      message = body.message || body.hint || message;
+    } catch (e) {}
+    throw new Error(message);
+  }
+
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function tryLogin() {
   const email = document.getElementById('email').value.trim().toLowerCase();
   const pass = document.getElementById('password').value;
   const err = document.getElementById('loginError');
+  const btn = document.querySelector('.login-btn');
 
-  if (email === DASH_EMAIL.toLowerCase() && pass === DASH_PASS) {
-    authed = true;
-    sessionStorage.setItem('dash_auth', '1');
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Conectando...';
+
+  try {
+    const rows = await cloudRpc('admin_snapshot', {
+      p_email: email,
+      p_password: pass
+    });
+    dashEmail = email;
+    dashPassword = pass;
+    dashUsers = (rows || []).map(row => ({
+      ...row.data,
+      id: row.id,
+      updatedAt: row.updated_at
+    }));
     showDash();
-  } else {
-    err.textContent = 'Correo o contraseña incorrectos.';
+  } catch (e) {
+    err.textContent = e.message === 'Credenciales incorrectas'
+      ? 'Correo o contraseña incorrectos.'
+      : 'No se pudo conectar con Supabase. Inténtalo de nuevo.';
     document.getElementById('password').value = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
   }
 }
 
 function showDash() {
+  authed = true;
   document.getElementById('loginWrap').style.display = 'none';
   document.getElementById('dash').classList.add('active');
   renderAll();
 }
 
 function logout() {
-  sessionStorage.removeItem('dash_auth');
+  authed = false;
+  dashEmail = '';
+  dashPassword = '';
+  dashUsers = [];
   location.reload();
 }
 
@@ -403,12 +452,8 @@ document.getElementById('password').addEventListener('keydown', e => {
 });
 
 // ============ DATOS ============
-const STORAGE_KEY = 'tablas_users_v1';
-
 function loadData() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch (e) { return []; }
+  return dashUsers;
 }
 
 // ============ RENDER ============
@@ -428,7 +473,7 @@ function renderAll() {
   if (users.length === 0) {
     document.getElementById('kpis').innerHTML = '';
     document.getElementById('usersTable').innerHTML =
-      '<div class="empty">No hay datos todavía.<br>Juega alguna sesión en el dispositivo y vuelve aquí.</div>';
+      '<div class="empty">No hay datos todavía.<br>Juega alguna sesión en la app y pulsa Actualizar.</div>';
     return;
   }
 
@@ -627,7 +672,23 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function refresh() { renderAll(); }
+async function refresh() {
+  if (!authed || !dashEmail) return;
+  try {
+    const rows = await cloudRpc('admin_snapshot', {
+      p_email: dashEmail,
+      p_password: dashPassword
+    });
+    dashUsers = (rows || []).map(row => ({
+      ...row.data,
+      id: row.id,
+      updatedAt: row.updated_at
+    }));
+    renderAll();
+  } catch (e) {
+    alert('No se pudieron actualizar los datos: ' + e.message);
+  }
+}
 
 function exportData() {
   const data = loadData();
@@ -639,11 +700,9 @@ function exportData() {
   URL.revokeObjectURL(a.href);
 }
 
-// Auto-login si ya hay sesión
-if (sessionStorage.getItem('dash_auth') === '1') {
-  authed = true;
-  showDash();
-}
+document.getElementById('email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('password').focus();
+});
 </script>
 
 </body>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tablas-multiplicar-v1';
+const CACHE_NAME = 'tablas-multiplicar-v2';
 const APP_SHELL = [
   './',
   './index.html',
