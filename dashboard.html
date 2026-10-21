@@ -214,11 +214,15 @@ body::before {
   .charts-grid { grid-template-columns: 1fr 1fr; }
   .chart-card.full { grid-column: 1 / -1; }
 }
+@media (min-width: 1000px) {
+  .charts-grid { grid-template-columns: repeat(3, 1fr); }
+}
 .chart-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 18px;
+  min-width: 0;
 }
 .chart-card h3 {
   font-size: 1rem;
@@ -265,15 +269,6 @@ tr:last-child td { border-bottom: none; }
   font-weight: 700;
   font-size: 0.85rem;
   flex-shrink: 0;
-}
-.badge-sm {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  background: rgba(118,75,162,0.25);
-  color: var(--primary-light);
 }
 .empty {
   text-align: center;
@@ -331,23 +326,19 @@ tr:last-child td { border-bottom: none; }
 
   <div class="charts-grid">
     <div class="chart-card">
-      <h3>🏆 Puntuación por jugador</h3>
-      <div class="chart-wrap"><canvas id="chartScore"></canvas></div>
+      <h3>📚 Sesiones por jugador</h3>
+      <div class="chart-wrap"><canvas id="chartSessions"></canvas></div>
     </div>
     <div class="chart-card">
-      <h3>🎯 Precisión por jugador (%)</h3>
-      <div class="chart-wrap"><canvas id="chartAccuracy"></canvas></div>
+      <h3>✏️ Operaciones practicadas por jugador</h3>
+      <div class="chart-wrap"><canvas id="chartOperations"></canvas></div>
     </div>
     <div class="chart-card">
-      <h3>⏱️ Tiempo medio de respuesta (s)</h3>
-      <div class="chart-wrap"><canvas id="chartTime"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>🏅 Insignias desbloqueadas</h3>
-      <div class="chart-wrap"><canvas id="chartBadges"></canvas></div>
+      <h3>🔢 Tablas practicadas por jugador</h3>
+      <div class="chart-wrap"><canvas id="chartTables"></canvas></div>
     </div>
     <div class="chart-card full">
-      <h3>📈 Evolución de sesiones (puntos por sesión)</h3>
+      <h3>📈 Operaciones por sesión</h3>
       <div class="chart-wrap"><canvas id="chartHistory"></canvas></div>
     </div>
   </div>
@@ -479,51 +470,65 @@ function renderAll() {
 
   // KPIs globales
   const totalSessions = users.reduce((s,u) => s + (u.sessions||0), 0);
-  const totalScore = users.reduce((s,u) => s + (u.score||0), 0);
-  const totalCorrect = users.reduce((s,u) => s + (u.totalCorrect||0), 0);
-  const totalWrong = users.reduce((s,u) => s + (u.totalWrong||0), 0);
-  const totalAns = totalCorrect + totalWrong;
-  const globalAcc = totalAns > 0 ? Math.round((totalCorrect/totalAns)*100) : 0;
-  const allBadges = users.reduce((s,u) => s + ((u.badges||[]).length), 0);
+  const totalOperations = users.reduce(
+    (s,u) => s + (u.totalCorrect||0) + (u.totalWrong||0),
+    0
+  );
+  const totalTables = users.reduce(
+    (s,u) => s + Object.keys(u.tablesCompleted||{}).length,
+    0
+  );
 
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><div class="kpi-value">${users.length}</div><div class="kpi-label">Jugadores</div></div>
     <div class="kpi"><div class="kpi-value">${totalSessions}</div><div class="kpi-label">Sesiones</div></div>
-    <div class="kpi"><div class="kpi-value">${totalScore}</div><div class="kpi-label">Puntos totales</div></div>
-    <div class="kpi"><div class="kpi-value">${globalAcc}%</div><div class="kpi-label">Precisión global</div></div>
-    <div class="kpi"><div class="kpi-value">${allBadges}</div><div class="kpi-label">Insignias</div></div>
+    <div class="kpi"><div class="kpi-value">${totalOperations}</div><div class="kpi-label">Operaciones practicadas</div></div>
+    <div class="kpi"><div class="kpi-value">${totalTables}</div><div class="kpi-label">Tablas trabajadas</div></div>
   `;
 
   const names = users.map(u => u.name);
   const colors = users.map((_,i) => PALETTE[i % PALETTE.length]);
 
-  // Score chart
-  charts.score = new Chart(document.getElementById('chartScore'), {
+  // Sessions chart
+  charts.sessions = new Chart(document.getElementById('chartSessions'), {
     type: 'bar',
     data: {
       labels: names,
       datasets: [{
-        label: 'Puntos',
-        data: users.map(u => u.score||0),
+        label: 'Sesiones',
+        data: users.map(u => u.sessions||0),
         backgroundColor: colors,
         borderRadius: 8,
         borderSkipped: false
       }]
     },
-    options: chartOpts(yTitle => yTitle)
+    options: chartOpts()
   });
 
-  // Accuracy chart
-  charts.acc = new Chart(document.getElementById('chartAccuracy'), {
+  // Operations chart
+  charts.operations = new Chart(document.getElementById('chartOperations'), {
     type: 'bar',
     data: {
       labels: names,
       datasets: [{
-        label: 'Precisión %',
-        data: users.map(u => {
-          const t = (u.totalCorrect||0)+(u.totalWrong||0);
-          return t > 0 ? Math.round((u.totalCorrect/t)*100) : 0;
-        }),
+        label: 'Operaciones practicadas',
+        data: users.map(u => (u.totalCorrect||0) + (u.totalWrong||0)),
+        backgroundColor: colors,
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: chartOpts()
+  });
+
+  // Tables chart
+  charts.tables = new Chart(document.getElementById('chartTables'), {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [{
+        label: 'Tablas practicadas',
+        data: users.map(u => Object.keys(u.tablesCompleted||{}).length),
         backgroundColor: colors,
         borderRadius: 8,
         borderSkipped: false
@@ -533,62 +538,21 @@ function renderAll() {
       ...chartOpts(),
       scales: {
         ...baseScales(),
-        y: { ...baseScales().y, max: 100, ticks: { callback: v => v+'%' } }
+        y: { ...baseScales().y, max: 10, ticks: { stepSize: 1 } }
       }
     }
   });
 
-  // Time chart
-  charts.time = new Chart(document.getElementById('chartTime'), {
-    type: 'bar',
-    data: {
-      labels: names,
-      datasets: [{
-        label: 'Tiempo medio (s)',
-        data: users.map(u =>
-          (u.totalAnswersTimed||0) > 0
-            ? +(u.totalTimeMs / u.totalAnswersTimed / 1000).toFixed(1)
-            : 0
-        ),
-        backgroundColor: colors,
-        borderRadius: 8,
-        borderSkipped: false
-      }]
-    },
-    options: chartOpts()
-  });
-
-  // Badges chart
-  charts.badges = new Chart(document.getElementById('chartBadges'), {
-    type: 'doughnut',
-    data: {
-      labels: names,
-      datasets: [{
-        data: users.map(u => (u.badges||[]).length),
-        backgroundColor: colors,
-        borderWidth: 0,
-        hoverOffset: 8
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { color: '#b0aac8', padding: 12, usePointStyle: true } }
-      }
-    }
-  });
-
-  // History chart (multi-line)
+  // History chart (multi-line, operations per session)
   const maxLen = Math.max(...users.map(u => (u.history||[]).length), 1);
-  const labelsH = Array.from({length: maxLen}, (_,i) => `S${maxLen - i}`);
+  const labelsH = Array.from({length: maxLen}, (_,i) => `S${i + 1}`);
   charts.hist = new Chart(document.getElementById('chartHistory'), {
     type: 'line',
     data: {
       labels: labelsH,
       datasets: users.map((u,idx) => ({
         label: u.name,
-        data: (u.history||[]).map(h => h.score||0),
+        data: (u.history||[]).slice().reverse().map(h => h.total||0),
         borderColor: colors[idx % colors.length],
         backgroundColor: colors[idx % colors.length] + '33',
         tension: 0.35,
@@ -608,32 +572,23 @@ function renderAll() {
   // Table
   let html = `<table>
     <thead><tr>
-      <th>Jugador</th><th>Edad</th><th>Nivel</th><th>Puntos</th>
-      <th>Sesiones</th><th>Aciertos</th><th>Fallos</th><th>Precisión</th>
-      <th>Mejor racha</th><th>Tiempo med.</th><th>Tablas</th><th>Insignias</th>
+      <th>Jugador</th><th>Edad</th><th>Sesiones</th>
+      <th>Operaciones</th><th>Tablas</th><th>Última actividad</th>
     </tr></thead><tbody>`;
 
   users.forEach((u,i) => {
-    const t = (u.totalCorrect||0)+(u.totalWrong||0);
-    const acc = t > 0 ? Math.round((u.totalCorrect/t)*100) : 0;
-    const avg = (u.totalAnswersTimed||0) > 0
-      ? (u.totalTimeMs/u.totalAnswersTimed/1000).toFixed(1)+'s' : '–';
-    const lvl = getLevelName(u.score||0);
+    const operations = (u.totalCorrect||0) + (u.totalWrong||0);
     const tabs = Object.keys(u.tablesCompleted||{}).length;
-    const bdg = (u.badges||[]).length;
+    const last = u.updatedAt
+      ? new Date(u.updatedAt).toLocaleDateString('es-ES')
+      : '–';
     html += `<tr>
       <td><div class="user-cell"><div class="user-av" style="background:${PALETTE[i%PALETTE.length]}">${u.name[0].toUpperCase()}</div>${esc(u.name)}</div></td>
       <td>${u.age||'–'}</td>
-      <td><span class="badge-sm">${lvl}</span></td>
-      <td><strong>${u.score||0}</strong></td>
       <td>${u.sessions||0}</td>
-      <td style="color:var(--green)">${u.totalCorrect||0}</td>
-      <td style="color:var(--red)">${u.totalWrong||0}</td>
-      <td>${acc}%</td>
-      <td>${u.bestStreak||0}</td>
-      <td>${avg}</td>
+      <td>${operations}</td>
       <td>${tabs}/10</td>
-      <td>${bdg}</td>
+      <td>${last}</td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -656,16 +611,6 @@ function chartOpts() {
     },
     scales: baseScales()
   };
-}
-
-function getLevelName(score) {
-  const L = [
-    [0,'🌱'],[150,'📚'],[400,'✏️'],[800,'🎯'],[1400,'🚀'],
-    [2200,'🏅'],[3200,'🎓'],[4500,'🧠'],[6000,'👑']
-  ];
-  let n = '🌱';
-  L.forEach(([m,ic]) => { if (score >= m) n = ic; });
-  return n;
 }
 
 function esc(s) {
