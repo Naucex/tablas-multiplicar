@@ -2415,7 +2415,14 @@ function keyDigit(d) {
   keypadBuffer += String(d);
   updateKeypadDisplay();
   syncInput();
-  checkAnswer();
+  const q = questions[currentIndex];
+  if (!q) return;
+  const val = parseInt(keypadBuffer);
+  if (val === q.answer) {
+    checkAnswer();
+  } else if (keypadBuffer.length >= String(q.answer).length) {
+    checkAnswer();
+  }
 }
 
 function keyBackspace() {
