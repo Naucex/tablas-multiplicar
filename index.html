@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Tablas">
-<title>Tablas de Multiplicar con Ábaco</title>
+<title>Tablas de Multiplicar</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
@@ -200,6 +200,29 @@ h1 {
   -webkit-text-fill-color: transparent;
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.2vw, 16px);
+  width: 100%;
+  margin-bottom: var(--space-md);
+  position: relative;
+  z-index: 2;
+}
+
+.app-header h1 {
+  margin: 0;
+  text-align: left;
+}
+
+.abacus-mark {
+  width: clamp(38px, 10vw, 54px);
+  height: auto;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 16px rgba(118, 75, 162, 0.24));
+}
+
 .container {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -210,6 +233,52 @@ h1 {
   width: 100%;
   min-height: min(500px, 80vh);
   position: relative;
+}
+
+.math-pattern {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.math-pattern span,
+.page-pattern span {
+  position: absolute;
+  display: block;
+  font-size: var(--size, 2rem);
+  font-weight: var(--font-weight-black);
+  line-height: 1;
+  color: var(--tone, var(--primary));
+  transform: rotate(var(--rot, 0deg));
+  transform-origin: center;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.math-pattern span {
+  opacity: 0.075;
+}
+
+.page-pattern {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.page-pattern span {
+  opacity: 0.13;
+}
+
+.screen {
+  position: relative;
+  z-index: 1;
 }
 
 /* Entrada dinámica de pantallas */
@@ -1275,13 +1344,304 @@ button:focus:not(:focus-visible) { outline: none; }
   caret-color: transparent;
   cursor: pointer;
 }
+
+@media (max-width: 480px) {
+  body {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+
+  .app-header {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .app-header h1 {
+    font-size: clamp(1.2rem, 6.8vw, 1.45rem);
+  }
+
+  .abacus-mark {
+    width: 38px;
+  }
+
+  .math-pattern span {
+    font-size: calc(var(--size) * 0.68);
+  }
+
+  .page-pattern span {
+    font-size: calc(var(--size) * 0.78);
+  }
+
+  #exercise {
+    gap: 6px;
+  }
+
+  #exercise .back-btn {
+    min-height: 34px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  #exercise .repetition-info {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  #exercise .exercise-grid {
+    gap: 6px;
+  }
+
+  #exercise .exercise-left,
+  #exercise .exercise-right {
+    gap: 6px;
+  }
+
+  #exercise .table-title {
+    font-size: 1rem;
+  }
+
+  #exercise #timeDisplay {
+    font-size: 0.82rem !important;
+  }
+
+  #exercise .abaco-container {
+    padding: 7px 9px;
+  }
+
+  #exercise .abaco {
+    gap: 3px;
+  }
+
+  #exercise .fila-abaco {
+    gap: 3px;
+  }
+
+  #exercise .fila-label {
+    width: 24px;
+    font-size: 0.8rem;
+  }
+
+  #exercise .varilla {
+    gap: 2px;
+    padding: 3px 5px;
+  }
+
+  #exercise .bead {
+    width: 15px;
+    height: 15px;
+  }
+
+  #exercise .question-display {
+    padding: 0;
+    font-size: 2rem;
+  }
+
+  #exercise .answer-input {
+    width: 82px;
+    height: 50px;
+    border-width: 3px;
+    font-size: 1.6rem;
+  }
+
+  #exercise .keypad {
+    padding: 8px;
+  }
+
+  #exercise .keypad-header {
+    padding: 2px 6px 6px;
+  }
+
+  #exercise .keypad-value {
+    font-size: 1.2rem;
+  }
+
+  #exercise .keypad-grid {
+    gap: 6px;
+  }
+
+  #exercise .key {
+    min-height: 44px;
+    font-size: 1.25rem;
+  }
+
+  #exercise .key-ok {
+    font-size: 1.05rem;
+  }
+
+  #exercise .timer-container {
+    height: 15px;
+  }
+
+  #exercise .feedback {
+    min-height: 24px;
+    font-size: 1rem;
+  }
+
+  #exercise .points-gain {
+    min-height: 18px;
+    font-size: 0.9rem;
+  }
+
+  #exercise .progress-dots {
+    gap: 4px;
+  }
+
+  #exercise .dot {
+    width: 10px;
+    height: 10px;
+  }
+
+  #exercise .stats {
+    gap: 6px;
+    padding: 4px;
+  }
+
+  #exercise .stat {
+    min-width: 46px;
+  }
+
+  #exercise .stat-value {
+    font-size: 1.1rem;
+  }
+
+  #exercise .stat-label {
+    font-size: 0.65rem;
+  }
+
+  #exercise .controls {
+    gap: 6px;
+  }
+
+  #exercise .control-btn {
+    min-height: 40px;
+    padding: 7px 14px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) and (max-height: 820px) {
+  body {
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+
+  .app-header {
+    margin-bottom: 6px;
+  }
+
+  #exercise {
+    gap: 4px;
+  }
+
+  #exercise .back-btn {
+    min-height: 30px;
+    padding: 4px 10px;
+  }
+
+  #exercise .exercise-left,
+  #exercise .exercise-right {
+    gap: 4px;
+  }
+
+  #exercise .question-display {
+    font-size: 1.8rem;
+  }
+
+  #exercise .answer-input {
+    height: 46px;
+  }
+
+  #exercise .keypad {
+    padding: 6px;
+  }
+
+  #exercise .keypad-header {
+    padding: 1px 6px 5px;
+  }
+
+  #exercise .keypad-grid {
+    gap: 5px;
+  }
+
+  #exercise .key {
+    min-height: 40px;
+  }
+
+  #exercise .timer-container {
+    height: 12px;
+  }
+
+  #exercise .feedback {
+    min-height: 20px;
+  }
+
+  #exercise .points-gain {
+    min-height: 14px;
+  }
+
+  #exercise .stats {
+    gap: 4px;
+    padding: 3px;
+  }
+
+  #exercise .stat-value {
+    font-size: 1rem;
+  }
+
+  #exercise .stat-label {
+    font-size: 0.6rem;
+  }
+
+  #exercise .controls {
+    gap: 4px;
+  }
+
+  #exercise .control-btn {
+    min-height: 36px;
+    padding: 5px 12px;
+  }
+}
 </style>
 </head>
 <body>
 
-<h1>🧮 Tablas de Multiplicar con Ábaco</h1>
+<div class="page-pattern" id="pagePattern" aria-hidden="true"></div>
+
+<header class="app-header">
+  <svg class="abacus-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="abacusFrame" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#667eea"/>
+        <stop offset="1" stop-color="#764ba2"/>
+      </linearGradient>
+      <linearGradient id="abacusBeads" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ff8a5c"/>
+        <stop offset="1" stop-color="#e04b3a"/>
+      </linearGradient>
+    </defs>
+    <rect x="3" y="7" width="58" height="50" rx="14" fill="url(#abacusFrame)"/>
+    <rect x="10" y="14" width="44" height="36" rx="9" fill="#fffdf8"/>
+    <g stroke="#d8c8ed" stroke-width="2" stroke-linecap="round">
+      <line x1="16" y1="24" x2="48" y2="24"/>
+      <line x1="16" y1="35" x2="48" y2="35"/>
+      <line x1="16" y1="46" x2="48" y2="46"/>
+    </g>
+    <g fill="url(#abacusBeads)">
+      <circle cx="21" cy="24" r="4.4"/>
+      <circle cx="31" cy="24" r="4.4"/>
+      <circle cx="27" cy="35" r="4.4"/>
+      <circle cx="42" cy="35" r="4.4"/>
+      <circle cx="20" cy="46" r="4.4"/>
+      <circle cx="30" cy="46" r="4.4"/>
+    </g>
+  </svg>
+  <h1>Tablas de Multiplicar</h1>
+</header>
 
 <div class="container">
+  <div class="math-pattern" id="mathPattern" aria-hidden="true"></div>
 
   <!-- Pantalla de usuarios -->
   <div class="screen active" id="userScreen">
@@ -2695,7 +3055,100 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+const mathPatternItems = [
+  { t: '×', x: 3, y: 5, s: 3.2, r: -12, tone: '--primary' },
+  { t: '7', x: 7, y: 14, s: 2, r: 9, tone: '--c-red' },
+  { t: '8', x: 12, y: 33, s: 2.6, r: -6, tone: '--primary' },
+  { t: '×', x: 3, y: 56, s: 2.2, r: 12, tone: '--c-orange' },
+  { t: '9', x: 8, y: 78, s: 3, r: -9, tone: '--primary' },
+  { t: '12', x: 16, y: 92, s: 1.9, r: 5, tone: '--c-green' },
+  { t: '6', x: 22, y: 7, s: 1.9, r: 8, tone: '--c-orange' },
+  { t: '×', x: 35, y: 4, s: 2.4, r: -11, tone: '--primary' },
+  { t: '24', x: 48, y: 10, s: 1.7, r: 6, tone: '--c-red' },
+  { t: '×', x: 61, y: 3, s: 2.8, r: 10, tone: '--primary' },
+  { t: '5', x: 78, y: 8, s: 2, r: -8, tone: '--c-orange' },
+  { t: '×', x: 90, y: 4, s: 3.1, r: 12, tone: '--primary' },
+  { t: '4', x: 94, y: 21, s: 2.2, r: -6, tone: '--c-red' },
+  { t: '×', x: 84, y: 34, s: 2.8, r: 8, tone: '--primary' },
+  { t: '36', x: 92, y: 52, s: 1.8, r: 15, tone: '--c-orange' },
+  { t: '×', x: 86, y: 70, s: 2.4, r: -10, tone: '--primary' },
+  { t: '8', x: 94, y: 88, s: 3, r: 7, tone: '--c-red' },
+  { t: '×', x: 74, y: 94, s: 2, r: -6, tone: '--primary' },
+  { t: '42', x: 60, y: 88, s: 2.6, r: 12, tone: '--primary' },
+  { t: '×', x: 45, y: 95, s: 1.8, r: -8, tone: '--c-orange' },
+  { t: '7', x: 30, y: 88, s: 2.2, r: 9, tone: '--c-red' },
+  { t: '×', x: 22, y: 74, s: 1.9, r: -5, tone: '--primary' },
+  { t: '9', x: 13, y: 65, s: 2.6, r: 11, tone: '--primary' },
+  { t: '×', x: 28, y: 60, s: 1.6, r: -12, tone: '--c-orange' },
+  { t: '6', x: 38, y: 45, s: 2.4, r: 8, tone: '--primary' },
+  { t: '×', x: 55, y: 52, s: 1.8, r: -10, tone: '--c-red' },
+  { t: '16', x: 68, y: 44, s: 2.2, r: 6, tone: '--primary' },
+  { t: '×', x: 72, y: 60, s: 1.6, r: -8, tone: '--c-green' },
+  { t: '×', x: 44, y: 72, s: 2.8, r: 12, tone: '--primary' },
+  { t: '3', x: 57, y: 30, s: 1.6, r: 9, tone: '--c-orange' },
+  { t: '×', x: 39, y: 25, s: 1.7, r: -7, tone: '--primary' },
+  { t: '×', x: 70, y: 25, s: 2.4, r: 12, tone: '--c-red' }
+];
+
+const pagePatternItems = [
+  { t: '×', x: 2, y: 4, s: 5.2, r: -14, tone: '--primary' },
+  { t: '4', x: 12, y: 12, s: 3.2, r: 10, tone: '--c-red' },
+  { t: '×', x: 25, y: 3, s: 4.4, r: 8, tone: '--primary' },
+  { t: '8', x: 39, y: 8, s: 3.6, r: -7, tone: '--c-orange' },
+  { t: '×', x: 51, y: 2, s: 5.2, r: 12, tone: '--primary' },
+  { t: '6', x: 66, y: 7, s: 3, r: -10, tone: '--c-red' },
+  { t: '×', x: 79, y: 3, s: 4.6, r: 8, tone: '--primary' },
+  { t: '9', x: 91, y: 9, s: 4, r: -6, tone: '--c-orange' },
+  { t: '×', x: 96, y: 24, s: 3.6, r: 12, tone: '--primary' },
+  { t: '12', x: 83, y: 19, s: 2.8, r: -9, tone: '--c-green' },
+  { t: '×', x: 6, y: 28, s: 4.2, r: 7, tone: '--primary' },
+  { t: '7', x: 19, y: 22, s: 3, r: -12, tone: '--c-red' },
+  { t: '×', x: 35, y: 35, s: 5, r: 9, tone: '--primary' },
+  { t: '24', x: 50, y: 29, s: 3.2, r: -6, tone: '--c-orange' },
+  { t: '×', x: 65, y: 38, s: 4.4, r: 12, tone: '--primary' },
+  { t: '8', x: 77, y: 30, s: 3.4, r: -8, tone: '--c-red' },
+  { t: '×', x: 91, y: 42, s: 4.8, r: 6, tone: '--primary' },
+  { t: '36', x: 4, y: 47, s: 3.2, r: 10, tone: '--c-orange' },
+  { t: '×', x: 17, y: 55, s: 4.2, r: -10, tone: '--primary' },
+  { t: '9', x: 31, y: 50, s: 3.6, r: 7, tone: '--c-green' },
+  { t: '×', x: 46, y: 62, s: 4.8, r: 12, tone: '--primary' },
+  { t: '6', x: 59, y: 54, s: 3, r: -7, tone: '--c-red' },
+  { t: '×', x: 72, y: 66, s: 4.4, r: 9, tone: '--primary' },
+  { t: '12', x: 86, y: 58, s: 3.4, r: -11, tone: '--c-orange' },
+  { t: '×', x: 96, y: 72, s: 4.6, r: 8, tone: '--primary' },
+  { t: '7', x: 8, y: 80, s: 3.4, r: -6, tone: '--c-red' },
+  { t: '×', x: 22, y: 88, s: 4.2, r: 10, tone: '--primary' },
+  { t: '16', x: 36, y: 80, s: 3, r: -9, tone: '--c-green' },
+  { t: '×', x: 52, y: 92, s: 4.8, r: 7, tone: '--primary' },
+  { t: '9', x: 68, y: 84, s: 3.4, r: -8, tone: '--c-orange' },
+  { t: '×', x: 83, y: 94, s: 4.4, r: 11, tone: '--primary' },
+  { t: '4', x: 94, y: 82, s: 3, r: -6, tone: '--c-red' }
+];
+
+function renderPattern(hostId, items) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  const fragment = document.createDocumentFragment();
+  items.forEach(function (item) {
+    const symbol = document.createElement('span');
+    symbol.textContent = item.t;
+    symbol.style.left = item.x + '%';
+    symbol.style.top = item.y + '%';
+    symbol.style.setProperty('--size', item.s + 'rem');
+    symbol.style.setProperty('--rot', item.r + 'deg');
+    symbol.style.color = 'var(' + item.tone + ')';
+    fragment.appendChild(symbol);
+  });
+  host.appendChild(fragment);
+}
+
+function renderMathPattern() {
+  renderPattern('mathPattern', mathPatternItems);
+  renderPattern('pagePattern', pagePatternItems);
+}
+
 // ============ INICIO ============
+renderMathPattern();
 loadUsers();
 renderUserList();
 initCloud();
