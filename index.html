@@ -1767,7 +1767,6 @@ button:focus:not(:focus-visible) { outline: none; }
         </div>
 
         <input type="number" class="answer-input" id="answerInput"
-               onkeypress="handleKeyPress(event)"
                autocomplete="off" min="0" inputmode="numeric">
 
         <div class="keypad-slot" id="keypadOverlay" role="group" aria-label="Teclado numérico">
@@ -2503,14 +2502,57 @@ function addPoints(pts) {
 }
 
 // ============ RESPUESTAS ============
-function handleKeyPress(event) {
+function handlePhysicalKey(event) {
+  const exercise = document.getElementById('exercise');
+  if (!exercise || !exercise.classList.contains('active')) return;
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+  const target = event.target;
+  if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) && target.id !== 'answerInput') return;
+
+  if (event.key === 'Escape') {
+    closeKeypad();
+    return;
+  }
+
   if (event.key === 'Enter') {
+    event.preventDefault();
     const nextBtn = document.getElementById('nextBtn');
     if (nextBtn.style.display === 'block') {
       nextQuestion();
     } else {
-      checkAnswer();
+      keyConfirm();
     }
+    return;
+  }
+
+  if (isAnswerShown || lastAnswerWasCorrect) return;
+
+  let digit = null;
+  if (/^[0-9]$/.test(event.key)) {
+    digit = event.key;
+  } else if (event.code && /^Numpad[0-9]$/.test(event.code)) {
+    digit = event.code.slice(-1);
+  }
+
+  if (digit !== null) {
+    event.preventDefault();
+    openKeypad();
+    keyDigit(digit);
+    return;
+  }
+
+  if (event.key === 'Backspace') {
+    event.preventDefault();
+    openKeypad();
+    keyBackspace();
+    return;
+  }
+
+  if (event.key === 'Delete' || event.key === 'c' || event.key === 'C') {
+    event.preventDefault();
+    openKeypad();
+    keyClear();
   }
 }
 
@@ -2995,9 +3037,7 @@ document.getElementById('answerInput').addEventListener('click', function (e) {
 document.getElementById('answerInput').setAttribute('readonly', 'readonly');
 document.getElementById('answerInput').classList.add('readonly-native');
 
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeKeypad();
-});
+document.addEventListener('keydown', handlePhysicalKey);
 
 // ============ INSTALACIÓN COMO APP WEB ============
 let deferredInstallPrompt = null;
