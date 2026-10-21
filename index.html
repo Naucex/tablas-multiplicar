@@ -1784,7 +1784,7 @@ function setCloudStatus(ok) {
 }
 
 async function syncPlayerCloud(u) {
-  if (!u || !u.id || !u.token) return false;
+  if (!u || !u.id || !u.token) return { ok: false, duplicate: false };
   try {
     const data = JSON.parse(JSON.stringify(u));
     delete data.token;
@@ -1798,11 +1798,12 @@ async function syncPlayerCloud(u) {
     const merged = { ...data, id: u.id };
     if (idx >= 0) cloudPlayers[idx] = merged;
     else cloudPlayers.push(merged);
-    return true;
+    return { ok: true, duplicate: false };
   } catch (err) {
     console.warn('No se pudo sincronizar con Supabase:', err);
-    setCloudStatus(false);
-    return false;
+    const duplicate = /ya existe un jugador con ese nombre/i.test(err.message || '');
+    setCloudStatus(duplicate ? true : false);
+    return { ok: false, duplicate };
   }
 }
 
@@ -1955,9 +1956,28 @@ function renderUserList() {
   });
 }
 
-function createUser() {
+function playerNameKey(name) {
+  return String(name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function playerNameExists(name) {
+  const key = playerNameKey(name);
+  return users.some(u => playerNameKey(u.name) === key)
+    || cloudPlayers.some(p => playerNameKey(p.name) === key);
+}
+
+let creatingUser = false;
+
+async function createUser() {
+  if (creatingUser) return;
   const input = document.getElementById('newUserName');
   const ageInput = document.getElementById('newUserAge');
+  const button = document.querySelector('.create-btn');
   const name = input.value.trim();
   const age = parseInt(ageInput.value);
 
@@ -1967,18 +1987,48 @@ function createUser() {
     ageInput.focus();
     return;
   }
-  if (users.some(u => u.name.toLowerCase() === name.toLowerCase())) {
+  if (playerNameExists(name)) {
     alert('Ya existe un jugador con ese nombre.');
+    input.focus();
     return;
   }
-  const user = newUserData(name, age);
-  users.push(user);
-  saveUsers();
-  syncPlayerCloud(user);
-  currentUserIndex = users.length - 1;
-  input.value = '';
-  ageInput.value = '';
-  enterMenu();
+
+  creatingUser = true;
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Creando...';
+  }
+
+  try {
+    const user = newUserData(name, age);
+    users.push(user);
+    saveUsers();
+
+    if (navigator.onLine) {
+      const result = await syncPlayerCloud(user);
+      if (result.duplicate) {
+        users = users.filter(u => u.id !== user.id);
+        saveUsers();
+        renderUserList();
+        alert('Ya existe un jugador con ese nombre.');
+        input.focus();
+        return;
+      }
+    } else {
+      syncPlayerCloud(user);
+    }
+
+    currentUserIndex = users.length - 1;
+    input.value = '';
+    ageInput.value = '';
+    enterMenu();
+  } finally {
+    creatingUser = false;
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Crear';
+    }
+  }
 }
 
 function selectUser(i) {
@@ -1998,6 +2048,9 @@ async function deleteUser(i) {
     pending.push({ id: user.id, token: user.token });
     savePendingDeletes(pending);
     await flushPendingDeletes();
+    if (!getPendingDeletes().some(item => item.id === user.id)) {
+      cloudPlayers = cloudPlayers.filter(p => p.id !== user.id);
+    }
   }
 }
 
